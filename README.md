@@ -15,18 +15,18 @@ human-assisted-NMT
 │
 └───hnmt
 │   └───nmt
-│   │    │ This directory contains all of the setup and processing necessary for our chosen "black box"
-│   │    │ "black box" pretrained NMT model ([trained on the JParaCrawl corpus](https://github.com/MorinoseiMorizo/jparacrawl-finetune)).  
-│   │    │ Instructions provided below for how to download and tokenize the parallel corpora and get the 
-│   │    │ NMT system output to use as input into the feedback-requestor for training and inference.
-│   │  
+│   │    │ This directory contains all of the setup and processing necessary for
+│   │    │ our chosen "black box" pretrained NMT model.  
+│   │    │ Instructions provided below for how to download and tokenize the 
+│   │    │ parallel corpora and get the NMT system output to use as input into 
+│   │    │ the feedback-requestor for training and inference.
 │   │
 │   │       
 │   │   
 │   └───feedback-requester
-│         │ Here lives all of the code for the feedback-requester model that uses the NMT output
-│         │ to determine whether to prompt a translator for feedback on a given sentence.
-│   
+│         │ Here lives all of the code for the feedback-requester model that
+│         │ uses the NMT output to determine whether to prompt a translator for 
+│         │ feedback on a given sentence.
 │       
 │      
 │        
@@ -35,6 +35,9 @@ human-assisted-NMT
 ```
 
 ## Pretrained NMT model setup and output generation
+
+For this initial proof-of-concept for our system, we are using a pretrained 
+Japanese-English NMT model [trained on the JParaCrawl corpus](https://github.com/MorinoseiMorizo/jparacrawl-finetune).
 
 ### Requirements for obtaining outputs from the JParaCrawl pretrained model
 
