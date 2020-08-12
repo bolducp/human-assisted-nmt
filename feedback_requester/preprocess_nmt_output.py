@@ -31,7 +31,7 @@ def generate_source_sent_embeddings(
 def generate_word_piece_sequential_input(
         output: List[Tuple[Tuple[str, torch.Tensor], str, str]], 
         source_sent_embeds: List[torch.Tensor]
-    ) -> List[Tuple[List[torch.Tensor], float]]:
+    ) -> List[Tuple[torch.Tensor, float]]:
     """
     Given the nmt output (a list of ((hypo, pos_probs), source_sent, gold_translation) tuples)
     and the list of source sentence embeddings as input, 
@@ -47,23 +47,33 @@ def generate_word_piece_sequential_input(
         sent_piece_embeddings: torch.Tensor = torch.from_numpy(bc.encode([output[i][0][0]])[0])
         chrf_score: float = nltk.translate.chrf_score.sentence_chrf(output[i][2], output[i][0][0])
 
-        word_piece_steps: List[torch.Tensor] = generate_word_piece_step_vectors(sent_piece_embeddings, pos_probs, source_sent_embed)
+        word_piece_steps: torch.Tensor = generate_word_piece_step_tensor(sent_piece_embeddings, pos_probs, source_sent_embed)
         processed_sent_data.append((word_piece_steps, chrf_score))
 
     return processed_sent_data
 
 
-def generate_word_piece_step_vectors(
+def generate_word_piece_step_tensor(
         sent_piece_embeddings: torch.Tensor,
         pos_probs: torch.Tensor,
         source_sent: torch.Tensor
-    ) -> List[torch.Tensor]:
+    ) -> torch.Tensor:
     """
     For a set of sent_piece_embeddings for an nmt output sentence, concat each embedding
     with the source sentence embedding and positional probabalities tensor
     """
-    return [torch.cat([piece, source_sent, pos_probs]) 
-            for piece in sent_piece_embeddings]
+    sent_piece_dim = len(sent_piece_embeddings[0])
+    source_sent_dim = len(source_sent)
+    pos_probs_dim = len(pos_probs)
+    word_piece_dimenson = sent_piece_dim + source_sent_dim + pos_probs_dim
+    sent_piece_source_sent_dim = sent_piece_dim + source_sent_dim
+
+    t = torch.zeros((len(sent_piece_embeddings), word_piece_dimenson))
+    for i, piece in enumerate(sent_piece_embeddings):
+        t[i, 0: sent_piece_dim] = piece
+        t[i, sent_piece_dim: sent_piece_source_sent_dim] = source_sent
+        t[i, sent_piece_source_sent_dim: sent_piece_source_sent_dim + pos_probs_dim] = pos_probs
+    return t
 
 
 def pad_or_truncate(pos_probs: torch.Tensor) -> torch.Tensor:
@@ -102,7 +112,7 @@ def run_source_sent_embeddings() -> None:
 
 def run_final_preprocessing(
     save_output_path: str = None
-    ) -> List[Tuple[List[torch.Tensor], float]]:
+    ) -> List[Tuple[torch.Tensor, float]]:
 
     # Change the BERT-as-a-service server to run with pooling_strategy set to NONE
     # e.g. "bert-serving-start -model_dir multi_cased_L-12_H-768_A-12/ -pooling_strategy=NONE -num_worker=4 -max_seq_len=NONE"
@@ -118,4 +128,4 @@ def run_final_preprocessing(
 
 # must do these 2 separately, with different BERT-as-a-service server settings!
 # run_source_sent_embeddings()
-run_final_preprocessing()
+run_final_preprocessing('/Users/paigefink/human-assisted-nmt/nmt/5000_final_out.p')
