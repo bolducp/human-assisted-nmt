@@ -51,7 +51,7 @@ def generate_nmt_output(
     """
     lines = read_lines(src_translations_path, trg_translations_path)
     nmt_out_lines = [(parse_nmt_output(pretrained_nmt_model.translate(line[0])), line[0], line[1]) 
-                    for line in lines]
+                    for line in lines[:5000]]
     pickle.dump(nmt_out_lines, open(output_save_path, 'wb'))
 
 
@@ -59,4 +59,4 @@ def generate_nmt_output(
 if __name__ == "__main__":
     tok_jpn_sents_path = "/Users/paigefink/human-assisted-nmt/nmt/corpus/spm/kyoto-train.ja"
     tok_en_sents_path = "/Users/paigefink/human-assisted-nmt/nmt/corpus/kftt-data-1.0/data/tok/kyoto-train.en"
-    generate_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "nmt/test_nmt_out.p")
+    generate_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "5000_nmt_out.p")

@@ -72,6 +72,7 @@ env.bak/
 venv.bak/
 .vscode
 .mypy_cache
+.DS_STORE
 
 # Project libs/dependencies
 vcpkg/
@@ -81,7 +82,7 @@ data-bin/
 pretrained_model_jaen/
 decode/
 decode.sh
-nmt/fastText
-nmt/multi_cased_L-12_H-768_A-12
+hnmt/nmt/fastText
+hnmt/nmt/multi_cased_L-12_H-768_A-12
 preprocessing/opus_out
 preprocessing/opus_filter_training_data.yaml

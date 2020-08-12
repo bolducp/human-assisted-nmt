@@ -100,8 +100,8 @@ def generate_and_save_source_sent_embeddings(
 
 
 # Change these files to match local paths
-saved_nmt_out = pickle.load(open('/Users/paigefink/human-assisted-nmt/nmt/test_nmt_out.p', "rb"))
-sent_embeds_file = '/Users/paigefink/human-assisted-nmt/nmt/test_source_sent_embeddings.p'
+saved_nmt_out = pickle.load(open('/Users/paigefink/human-assisted-nmt/nmt/5000_nmt_out.p', "rb"))
+sent_embeds_file = '/Users/paigefink/human-assisted-nmt/nmt/5000_source_sent_embeddings.p'
 
 def run_source_sent_embeddings() -> None:
     # First, make sure that the BERT-as-a-service server is running with pooling_strategy (default is REDUCE_MEAN)
