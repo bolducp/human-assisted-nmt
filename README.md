@@ -15,18 +15,18 @@ human-assisted-NMT
 │
 └───hnmt
 │   └───nmt
-│   │    │ This directory contains all of the setup and processing necessary for
-│   │    │ our chosen "black box" pretrained NMT model.  
-│   │    │ Instructions provided below for how to download and tokenize the 
-│   │    │ parallel corpora and get the NMT system output to use as input into 
-│   │    │ the feedback-requestor for training and inference.
+│   │    │ This directory contains all of the setup and processing necessary for our chosen
+│   │    │ "black box" pretrained NMT model.  
+│   │    │ Instructions provided below for how to download and tokenize the  NMT system output
+│   │    │ to use as input into the feedback-requestor for training and inference.
+│   │  
 │   │
 │   │       
 │   │   
 │   └───feedback-requester
-│         │ Here lives all of the code for the feedback-requester model that
-│         │ uses the NMT output to determine whether to prompt a translator for 
-│         │ feedback on a given sentence.
+│         │ Here lives all of the code for the feedback-requester model that uses the NMT output
+│         │ to determine whether to prompt a translator for feedback on a given sentence.
+│   
 │       
 │      
 │        
