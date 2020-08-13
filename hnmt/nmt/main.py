@@ -4,15 +4,14 @@ import torch
 import sentencepiece as spm
 import fairseq
 from typing import List, Tuple
-
-
-sp = spm.SentencePieceProcessor()
-sp.load("/Users/paigefink/human-assisted-nmt/nmt/corpus/enja_spm_models/spm.en.nopretok.model")
+from hnmt.utils import get_current_directory
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
+sp = spm.SentencePieceProcessor()
+sp.load(current_dir + "/corpus/enja_spm_models/spm.en.nopretok.model")
+
 model_dir = current_dir + '/pretrained_model_jaen'
 pretrained_nmt_model = fairseq.models.BaseFairseqModel.from_pretrained(model_dir, checkpoint_file='small.pretrain.pt')
-
 
 def read_lines(
         src_translations_path: str,
@@ -55,8 +54,7 @@ def generate_nmt_output(
     pickle.dump(nmt_out_lines, open(output_save_path, 'wb'))
 
 
-
 if __name__ == "__main__":
-    tok_jpn_sents_path = "/Users/paigefink/human-assisted-nmt/nmt/corpus/spm/kyoto-train.ja"
-    tok_en_sents_path = "/Users/paigefink/human-assisted-nmt/nmt/corpus/kftt-data-1.0/data/tok/kyoto-train.en"
-    generate_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "5000_nmt_out.p")
+    tok_jpn_sents_path = current_dir + "/corpus/spm/kyoto-train.ja"
+    tok_en_sents_path =  current_dir + "/corpus/kftt-data-1.0/data/tok/kyoto-train.en"
+    generate_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "nmt_out.p")
