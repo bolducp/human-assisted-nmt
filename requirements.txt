@@ -1,4 +1,9 @@
 
-torch==1.5.1
-sentencepiece==0.1.92
+torch==1.6.0
+torchvision==0.7.0
+sentencepiece==0.1.91
 git+git://github.com:pytorch/fairseq.git@c81fed46ac7868c6d80206ff71c6f6cfe93aee22
+tensorflow>=1.10.0
+bert-serving-client==1.10.0
+bert-serving-server==1.10.0
+nltk==3.5
