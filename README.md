@@ -47,20 +47,20 @@ and "/corpus/kftt-data-1.0/data/tok/kyoto-train.en" if using the KFTT corpus-- a
 example for how to download and preprocess this data can be found on the JParaCrawl
 github).
 
-1. Make sure that you have all of the dependencies installed. NOTE: per the JParaCrawl github instructions, make sure to use the same version of the fairseq library that they used when pre-training the model:
+**1.** Make sure that you have all of the dependencies installed. NOTE: per the JParaCrawl github instructions, make sure to use the same version of the fairseq library that they used when pre-training the model:
 ```
 $ cd fairseq
 $ git checkout c81fed46ac7868c6d80206ff71c6f6cfe93aee22
 ```
-2. Download the pretrained model from the JParaCrawl [website](http://www.kecl.ntt.co.jp/icl/lirg/jparacrawl/). There are three sizes available (small, base, and large). Make sure that the `checkpoint_file` parameter used to instaniate the `pretrained_nmt_model` in `nmt/main.py` correctly references the size of the model you downloaded.
-3. Create a sub-folder in `nmt` called `pretrained_model_jaen` for the pretrained model (should include `dict.en.txt`, `dict.ja.txt`, `LICENSE`, and the model file, e.g. `small.pretrain.pt`).
-4. Ensure that the `tok_jpn_sents_path` and `tok_en_sents_path` variables in `nmt/main.py` point to your local data paths.
-5. Run `python3 main.py`, which will save the pickled output to a file called `nmt_out.p` in the `nmt` directory.
+**2.** Download the pretrained model from the JParaCrawl [website](http://www.kecl.ntt.co.jp/icl/lirg/jparacrawl/). There are three sizes available (small, base, and large). Make sure that the `checkpoint_file` parameter used to instaniate the `pretrained_nmt_model` in `nmt/main.py` correctly references the size of the model you downloaded.
+**3.** Create a sub-folder in `nmt` called `pretrained_model_jaen` for the pretrained model (should include `dict.en.txt`, `dict.ja.txt`, `LICENSE`, and the model file, e.g. `small.pretrain.pt`).
+**4.** Ensure that the `tok_jpn_sents_path` and `tok_en_sents_path` variables in `nmt/main.py` point to your local data paths.
+**5.** Run `python3 main.py`, which will save the pickled output to a file called `nmt_out.p` in the `nmt` directory.
 
 ### Using output from a different NMT system
 To be used as input into the feedback-requester model, NMT output should have the following form List[Tuple[Tuple[str, torch.Tensor], str, str]], where each item in the list represents the NMT system output for a given sentence and the true reference translation. Specifically, each item should be:
 
-((str: predicted nmt output, torch.Tensor: probabilty score for each word piece), str: input source text, str: gold translation target)
+((predicted nmt output: str, probabilty score for each word piece: torch.Tensor), input source text: str, gold translation target: str)
 
 For example, here is a single element in the output list:
 ```
@@ -75,4 +75,26 @@ For example, here is a single element in the output list:
 
 ## Installation and running the feedback-requestor
 
-## Experiments
+After installing all of the necessary dependencies, there are two more data processing steps that need to be taken to finish preparing the input dataset, both using [BERT-as-service](https://github.com/hanxiao/bert-as-service) to obtain sentence and word embeddings.
+
+### Preparing the input data
+
+**1.** Download the pretrained BERT model (BERT-base, Multilingual Case) from [here](https://github.com/google-research/bert#pre-trained-models).
+
+**2.** Run the BERT-as-service server locally (from the directory where the pretrained model lives) with a pooling_strategy enabled (default is REDUCE_MEAN):
+```
+bert-serving-start -model_dir multi_cased_L-12_H-768_A-12/ -num_worker=4 -max_seq_len=NONE
+```
+Then run the `feedback_requester/prepare_nmt_output.py` file, making sure that *only* `run_source_sent_embeddings(saved_nmt_out_file, sent_embeds_file)` is uncommented.
+
+This enables us to generate and save fixed-size sentence embeddings for each of the source sentences.
+
+**3.** Kill the current BERT-as-service server and re-run, with pooling_strategy set to NONE:
+```
+bert-serving-start -model_dir multi_cased_L-12_H-768_A-12/ -pooling_strategy=NONE -num_worker=4 -max_seq_len=NONE
+```
+Then run the `feedback_requester/prepare_nmt_output.py` file, **but this time** making sure that only `run_final_preprocessing(current_dir + '/preprocessing_outputs/final_out_sample.p')` is uncommented.
+
+This enables us to generate contextual word embeddings for each word piece in the nmt output translation.
+
+### Training the feedback-requester model

@@ -4,7 +4,6 @@ import torch
 import sentencepiece as spm
 import fairseq
 from typing import List, Tuple
-from hnmt.utils import get_current_directory
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 sp = spm.SentencePieceProcessor()
@@ -50,7 +49,7 @@ def generate_nmt_output(
     """
     lines = read_lines(src_translations_path, trg_translations_path)
     nmt_out_lines = [(parse_nmt_output(pretrained_nmt_model.translate(line[0])), line[0], line[1]) 
-                    for line in lines[:5000]]
+                    for line in lines]
     pickle.dump(nmt_out_lines, open(output_save_path, 'wb'))
 
 
