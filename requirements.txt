@@ -1,4 +1,4 @@
-
+python==3.7
 torch==1.6.0
 torchvision==0.7.0
 sentencepiece==0.1.91
