@@ -25,16 +25,16 @@ class NMTOutputDataset(Dataset):
 
 def collate_pad_fn(
         batch: List[Tuple[torch.Tensor, float]]
-    ) -> List[Union[PackedSequence, List[float]]]:
+    ) -> List[Union[PackedSequence, torch.Tensor]]:
     """
     Pads variable-length sequences of word_piece vectors where
     'batch' is a list of tuples like: (sequence of wordpeice tensors, chrf_score)
     """
     data = [seq[0] for seq in batch]
-    lengths = [len(seq) for seq in data]
+    # lengths = [len(seq) for seq in data]
     packed_data = pack_sequence(data, enforce_sorted=False) # if I want to use dropout, might need to move this packing into the forward pass
     targets = [seq[1] for seq in batch]
-    return [packed_data, lengths, targets]
+    return [packed_data, torch.Tensor(targets)]
 
 
 def generate_source_sent_embeddings(

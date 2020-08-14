@@ -1,52 +1,43 @@
 import os
+from typing import Callable
+from torch import Tensor
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from hnmt.feedback_requester.data import NMTOutputDataset, collate_pad_fn
 from hnmt.feedback_requester.model import LSTMClassifier
 
 
-
-def loss_function(nmt_output, chrf_scores):
+def loss_function(nmt_output: Tensor, chrf_scores: Tensor) -> float:
     return sum((nmt_output * chrf_scores) + ((1 - nmt_output) * (1 - chrf_scores)))
 
 
-def train(model, iterator, optimizer, criterion):
-
-    #initialize every epoch
+def train(
+        model: LSTMClassifier,
+        iterator: DataLoader, 
+        optimizer, 
+        criterion
+    ) -> float:
     epoch_loss = 0
-    epoch_acc = 0
-
-    #set the model in training phase
     model.train()
 
     for batch in iterator:
 
-        #resets the gradients after every batch
         optimizer.zero_grad()
+        packed_data, chrf_scores = batch
 
-        #retrieve text and no. of words
-        packed_data, seq_lengths, chrf_scores = batch
+        # convert to 1D tensor
+        predictions = model(packed_data).squeeze()
 
-        #convert to 1D tensor
-        predictions = model(packed_data, seq_lengths).squeeze()
-
-        #compute the loss
         loss = criterion(predictions, chrf_scores)
+        print(loss)
 
-        #compute the binary accuracy
-        # acc = binary_accuracy(predictions, batch.label)
-
-        #backpropage the loss and compute the gradients
         loss.backward()
 
-        #update the weights
+        # update the weights
         optimizer.step()
 
-        #loss and accuracy
         epoch_loss += loss.item()
-        # epoch_acc += acc.item()
 
-    # return epoch_loss / len(iterator), epoch_acc / len(iterator)
     return epoch_loss / len(iterator)
 
 
