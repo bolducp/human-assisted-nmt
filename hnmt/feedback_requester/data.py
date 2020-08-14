@@ -30,10 +30,11 @@ def collate_pad_fn(
     Pads variable-length sequences of word_piece vectors where
     'batch' is a list of tuples like: (sequence of wordpeice tensors, chrf_score)
     """
-    data = [item[0] for item in batch]
-    packed_data = pack_sequence(data, enforce_sorted=False)
-    targets = [item[1] for item in batch]
-    return [packed_data, targets]
+    data = [seq[0] for seq in batch]
+    lengths = [len(seq) for seq in data]
+    packed_data = pack_sequence(data, enforce_sorted=False) # if I want to use dropout, might need to move this packing into the forward pass
+    targets = [seq[1] for seq in batch]
+    return [packed_data, lengths, targets]
 
 
 def generate_source_sent_embeddings(
