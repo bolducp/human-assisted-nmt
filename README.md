@@ -75,26 +75,24 @@ For example, here is a single element in the output list:
 
 ## Installation and running the feedback-requestor
 
-After installing all of the necessary dependencies, there are two more data processing steps that need to be taken to finish preparing the input dataset, both using [BERT-as-service](https://github.com/hanxiao/bert-as-service) to obtain sentence and word embeddings.
+After installing all of the necessary dependencies, there is one more data preprocessing step needed to obtain sentence and word embeddings to finalize the system input.
 
 ### Preparing the input data
 
-**1.** Download the pretrained BERT model (BERT-base, Multilingual Case) from [here](https://github.com/google-research/bert#pre-trained-models).
+Run the `feedback_requester/prepare_nmt_output.py` file. This will generate and save fixed-size sentence embeddings for each of the source sentences first, and then contextual word embeddings for each word piece in the nmt output translation and put it into the final input form.
 
-**2.** Run the BERT-as-service server locally (from the directory where the pretrained model lives) with a pooling_strategy enabled (default is REDUCE_MEAN):
-```
-bert-serving-start -model_dir multi_cased_L-12_H-768_A-12/ -num_worker=4 -max_seq_len=NONE
-```
-Then run the `feedback_requester/prepare_nmt_output.py` file, making sure that *only* `run_source_sent_embeddings(saved_nmt_out_file, sent_embeds_file)` is uncommented.
+You can also run the code to generate the source sentence embeddings and NMT output word piece embeddings/final configuration separately by running the commands inside `prepare_nmt_output.py` separately. i.e.:
 
-This enables us to generate and save fixed-size sentence embeddings for each of the source sentences.
+Source sentence embeddings: `run_source_sent_embeddings(saved_nmt_out_file, sent_embeds_file)` 
 
-**3.** Kill the current BERT-as-service server and re-run, with pooling_strategy set to NONE:
-```
-bert-serving-start -model_dir multi_cased_L-12_H-768_A-12/ -pooling_strategy=NONE -num_worker=4 -max_seq_len=NONE
-```
-Then run the `feedback_requester/prepare_nmt_output.py` file, **but this time** making sure that only `run_final_preprocessing(current_dir + '/preprocessing_outputs/final_out_sample.p')` is uncommented.
+NMT output word piece embeddings/final configuration: `run_final_preprocessing(current_dir + '/preprocessing_outputs/final_out_sample.p')`
 
-This enables us to generate contextual word embeddings for each word piece in the nmt output translation.
 
 ### Training the feedback-requester model
+
+
+## TO DOS
+Swap out use of BERT-as-service for functionality from Huggingface Transformers library instead
+
+
+# add info about changes I had to make to fairseq lib

@@ -2,11 +2,11 @@ import os
 import pickle
 from typing import List, Tuple, Union
 import nltk.translate.chrf_score
-from bert_serving.client import BertClient
 from typing import List, Tuple
 import torch
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pack_sequence, PackedSequence
+from transformers import BertTokenizer, BertModel
 from hnmt.utils import get_root_directory
 
 root_dir = get_root_directory()
@@ -43,12 +43,19 @@ def generate_source_sent_embeddings(
     """
     Given the nmt output list of tuples where each element: ((hypo, pos_probs), source_sent, gold_translation)
     Returns a list of all of the source sentence embeddings (per multilingual BERT model)
-
-    This requires that the bert-as-a-service server is running with a pooling_strategy in use (default is REDUCE_MEAN)
-    e.g. bert-serving-start -model_dir multi_cased_L-12_H-768_A-12/ -num_worker=4 -max_seq_len=NONE
     """
-    bc = BertClient()
-    return [bc.encode([x[1][1:]]) for x in output]
+    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+    model = BertModel.from_pretrained('bert-base-multilingual-cased', output_hidden_states = True)
+    output_sent_embeds = []
+
+    for sent in output:
+        input_ids = torch.tensor([tokenizer.encode(sent[1][1:], add_special_tokens=True)])
+        with torch.no_grad():
+            model_out = model(input_ids)
+            token_vecs = model_out[2][-2][0]
+            output_sent_embeds.append(torch.mean(token_vecs, dim=0))
+
+    return output_sent_embeds
 
 
 def generate_word_piece_sequential_input(
@@ -62,16 +69,22 @@ def generate_word_piece_sequential_input(
     predicted word (dim 768), and concats each word-piece embedding with the
     source sent embedding and the vector of (padded if necessary) probablities
     """
-    bc = BertClient()
+    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+    model = BertModel.from_pretrained('bert-base-multilingual-cased', output_hidden_states = True)
     processed_sent_data = []
 
     for i in range(len(output)):
-        source_sent_embed: torch.Tensor = torch.from_numpy(source_sent_embeds[i][0])
+        source_sent_embed: torch.Tensor = source_sent_embeds[i]
         pos_probs: torch.Tensor = pad_or_truncate(output[i][0][1])
-        sent_piece_embeddings: torch.Tensor = torch.from_numpy(bc.encode([output[i][0][0]])[0])
         chrf_score: float = nltk.translate.chrf_score.sentence_chrf(output[i][2], output[i][0][0])
 
-        word_piece_steps: torch.Tensor = generate_word_piece_step_tensor(sent_piece_embeddings, pos_probs, source_sent_embed)
+        input_ids = torch.tensor([tokenizer.encode(output[i][0][0], add_special_tokens=True)])
+        with torch.no_grad():
+            last_four_hidden_states = model(input_ids)[2][-4:]
+            last_four_stacked = torch.squeeze(torch.stack(last_four_hidden_states), dim=1)
+            word_piece_vectors = torch.sum(last_four_stacked, dim=0)
+
+        word_piece_steps: torch.Tensor = generate_word_piece_step_tensor(word_piece_vectors, pos_probs, source_sent_embed)
         processed_sent_data.append((word_piece_steps, chrf_score))
 
     return processed_sent_data
