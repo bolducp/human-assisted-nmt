@@ -1,7 +1,5 @@
-python==3.7
 torch==1.6.0
 torchvision==0.7.0
 sentencepiece==0.1.91
-git+git://github.com:pytorch/fairseq.git@c81fed46ac7868c6d80206ff71c6f6cfe93aee22
 nltk==3.5
 transformers==3.0.2

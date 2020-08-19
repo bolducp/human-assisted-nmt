@@ -47,10 +47,13 @@ and "/corpus/kftt-data-1.0/data/tok/kyoto-train.en" if using the KFTT corpus-- a
 example for how to download and preprocess this data can be found on the JParaCrawl
 github).
 
-**1.** Make sure that you have all of the dependencies installed. NOTE: per the JParaCrawl github instructions, make sure to use the same version of the fairseq library that they used when pre-training the model:
+**1.** Make sure that you have all of the dependencies listed in `requirements.txt` installed. One additional dependency that you'll need locally is my verison of the fairseq library, which I had to adapt in order to get the NMT model probablity outputs.
 ```
+$ git clone git@github.com:bolducp/fairseq.git
+$ git fetch --all
+$ git checkout hnmt
 $ cd fairseq
-$ git checkout c81fed46ac7868c6d80206ff71c6f6cfe93aee22
+$ pip install ./
 ```
 **2.** Download the pretrained model from the JParaCrawl [website](http://www.kecl.ntt.co.jp/icl/lirg/jparacrawl/). There are three sizes available (small, base, and large). Make sure that the `checkpoint_file` parameter used to instaniate the `pretrained_nmt_model` in `nmt/main.py` correctly references the size of the model you downloaded.
 **3.** Create a sub-folder in `nmt` called `pretrained_model_jaen` for the pretrained model (should include `dict.en.txt`, `dict.ja.txt`, `LICENSE`, and the model file, e.g. `small.pretrain.pt`).
@@ -71,8 +74,6 @@ For example, here is a single element in the output list:
  'He revolutionized the Japanese ink painting .')
 ```
 
-
-
 ## Installation and running the feedback-requestor
 
 After installing all of the necessary dependencies, there is one more data preprocessing step needed to obtain sentence and word embeddings to finalize the system input.
@@ -89,10 +90,4 @@ NMT output word piece embeddings/final configuration: `run_final_preprocessing(c
 
 
 ### Training the feedback-requester model
-
-
-## TO DOS
-Swap out use of BERT-as-service for functionality from Huggingface Transformers library instead
-
-
-# add info about changes I had to make to fairseq lib
+`python3 train.py`
