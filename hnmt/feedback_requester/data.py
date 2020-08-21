@@ -143,7 +143,8 @@ grammar_error_matches = tool.check(hypo)
 """
 
 def run_source_sent_embeddings(nmt_out_file: str, sent_embeds_file: str) -> None:
-    saved_nmt_out = pickle.load(open(root_dir + nmt_out_file, "rb"))
+    with open(root_dir + nmt_out_file, "rb") as f:
+        saved_nmt_out = pickle.load(f)
     generate_and_save_source_sent_embeddings(saved_nmt_out, sent_embeds_file)
 
 
@@ -152,8 +153,12 @@ def run_final_preprocessing(
     sent_embeds_path: str,
     save_output_path: str = None
     ) -> List[Tuple[torch.Tensor, float]]:
-    saved_nmt_out = pickle.load(open(root_dir + nmt_out_file, "rb"))
-    saved_source_sent_embeddings = pickle.load(open(sent_embeds_path, "rb"))
+    with open(root_dir + nmt_out_file, "rb") as f:
+        saved_nmt_out = pickle.load(f)
+
+    with open(sent_embeds_path, "rb") as f:
+        saved_source_sent_embeddings = pickle.load(f)
+
     final_training_input = generate_word_piece_sequential_input(saved_nmt_out, saved_source_sent_embeddings)
 
     if save_output_path:
