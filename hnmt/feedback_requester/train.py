@@ -1,10 +1,12 @@
 import os
 from typing import Callable
+import torch
 from torch import Tensor
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from hnmt.feedback_requester.data import NMTOutputDataset, collate_pad_fn
 from hnmt.feedback_requester.model import LSTMClassifier
+from torch.utils.tensorboard import SummaryWriter
 
 
 def loss_function(nmt_output: Tensor, chrf_scores: Tensor) -> float:
@@ -43,20 +45,40 @@ def train(
 
 
 def run_training():
+    writer = SummaryWriter()
+
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    sample_nmt_output_file = current_dir + "/preprocessing_outputs/final_out_sample.p"
-    dataset = NMTOutputDataset(sample_nmt_output_file)
+    dataset = NMTOutputDataset(current_dir + "/preprocessing_outputs/final_out_sample.p")
     dataloader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers=4, collate_fn=collate_pad_fn, pin_memory=True)
 
-    N_EPOCHS = 5
+    validation_set = NMTOutputDataset(current_dir + "/preprocessing_outputs/final_out_validation_set_2000.p")
+    valid_dataloader = DataLoader(validation_set, batch_size=16, shuffle=True, num_workers=4, collate_fn=collate_pad_fn, pin_memory=True)
+
+    N_EPOCHS = 10
     model = LSTMClassifier(1586, 1586)
     optimizer = optim.Adam(model.parameters())
 
     for epoch in range(N_EPOCHS):
         train_loss = train(model, dataloader, optimizer, loss_function)
         print("train loss (epoch {}):".format(epoch), train_loss)
+        writer.add_scalar("Loss/train", train_loss, epoch)
+        torch.save(model.state_dict(), current_dir + "/saved/epoch_{}.pt".format(epoch))
 
+        model.eval()
+        with torch.no_grad():
+            epoch_loss = 0
 
+            for batch in valid_dataloader:
+                packed_data, chrf_scores = batch
+                predictions = model(packed_data).squeeze()
+                loss = loss_function(predictions, chrf_scores)
+                epoch_loss += loss.item()
 
+            validation_loss = epoch_loss / len(valid_dataloader)
+            writer.add_scalar("Loss/validation", validation_loss, epoch)
+            print("validation_loss loss (epoch {}):".format(epoch), validation_loss)
+            print("\n\n\n")
 
+    writer.close()
 
+run_training()
