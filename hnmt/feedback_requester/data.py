@@ -2,12 +2,15 @@ import os
 import pickle
 from typing import List, Tuple, Union
 import nltk.translate.chrf_score
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union
 import torch
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pack_sequence, PackedSequence
 from transformers import BertTokenizer, BertModel
 from hnmt.utils import get_root_directory
+
+NMT_OUTPUT_TRAIN = List[Tuple[Tuple[str, torch.Tensor], str, str]]
+NMT_OUTPUT_EVAL = List[Tuple[Tuple[str, torch.Tensor], str]]
 
 root_dir = get_root_directory()
 
@@ -37,8 +40,20 @@ def collate_pad_fn(
     return [packed_data, torch.Tensor(targets)]
 
 
+def prediction_collate_pad_fn(
+        batch: List[Tuple[torch.Tensor, None]]
+    ) -> PackedSequence:
+    """
+    Pads variable-length sequences of word_piece vectors where
+    'batch' is a list of tuples like: (sequence of wordpeice tensors, None)
+    """
+    data = [seq[0] for seq in batch]
+    packed_data = pack_sequence(data, enforce_sorted=False)
+    return packed_data
+
+
 def generate_source_sent_embeddings(
-        output: List[Tuple[Tuple[str, torch.Tensor], str, str]]
+        output: Union[NMT_OUTPUT_TRAIN, NMT_OUTPUT_EVAL],
     ) -> List[torch.Tensor]:
     """
     Given the nmt output list of tuples where each element: ((hypo, pos_probs), source_sent, gold_translation)
@@ -59,9 +74,10 @@ def generate_source_sent_embeddings(
 
 
 def generate_word_piece_sequential_input(
-        output: List[Tuple[Tuple[str, torch.Tensor], str, str]],
-        source_sent_embeds: List[torch.Tensor]
-    ) -> List[Tuple[torch.Tensor, float]]:
+        output: Union[NMT_OUTPUT_TRAIN, NMT_OUTPUT_EVAL],
+        source_sent_embeds: List[torch.Tensor],
+        training: bool = True,
+    ) -> List[Tuple[torch.Tensor, Optional[float]]]:
     """
     Given the nmt output (a list of ((hypo, pos_probs), source_sent, gold_translation) tuples)
     and the list of source sentence embeddings as input,
@@ -76,7 +92,11 @@ def generate_word_piece_sequential_input(
     for i in range(len(output)):
         source_sent_embed: torch.Tensor = source_sent_embeds[i]
         pos_probs: torch.Tensor = pad_or_truncate(output[i][0][1])
-        chrf_score: float = nltk.translate.chrf_score.sentence_chrf(output[i][2], output[i][0][0])
+
+        if training:
+            chrf_score: Optional[float] = nltk.translate.chrf_score.sentence_chrf(output[i][2], output[i][0][0])
+        else:
+            chrf_score = None
 
         input_ids = torch.tensor([tokenizer.encode(output[i][0][0], add_special_tokens=True)])
         with torch.no_grad():
@@ -125,7 +145,7 @@ def pad_or_truncate(pos_probs: torch.Tensor) -> torch.Tensor:
 
 
 def generate_and_save_source_sent_embeddings(
-        nmt_out: List[Tuple[Tuple[str, torch.Tensor], str, str]],
+        nmt_out: Union[NMT_OUTPUT_TRAIN, NMT_OUTPUT_EVAL],
         save_filepath: str
     ) -> None:
     """
@@ -152,7 +172,7 @@ def run_final_preprocessing(
     nmt_out_file: str,
     sent_embeds_path: str,
     save_output_path: str = None
-    ) -> List[Tuple[torch.Tensor, float]]:
+    ) -> List[Tuple[torch.Tensor, Optional[float]]]:
     with open(root_dir + nmt_out_file, "rb") as f:
         saved_nmt_out = pickle.load(f)
 

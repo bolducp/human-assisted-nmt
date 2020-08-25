@@ -66,6 +66,16 @@ def generate_nmt_output(
     pickle.dump(nmt_out_lines, open(output_save_path, 'wb'))
 
 
+def get_document_nmt_output(
+        document_sents: List[str]
+    ) -> List[Tuple[Tuple[str, torch.Tensor], str]]:
+    """
+    Generates the nmt output for a user-provided document
+    """
+    return [(parse_nmt_output(pretrained_nmt_model.translate(sent)), sent)
+            for sent in document_sents]
+
+
 if __name__ == "__main__":
     tok_jpn_sents_path = current_dir + "/corpus/spm/kyoto-train.ja"
     tok_en_sents_path =  current_dir + "/corpus/kftt-data-1.0/data/tok/kyoto-train.en"
