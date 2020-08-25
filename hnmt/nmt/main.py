@@ -25,6 +25,18 @@ def read_lines(
     return [(source_lines[i], line) for i, line in enumerate(target_lines)]
 
 
+def filter_by_length(
+    lines: List[Tuple[str, str]],
+    max_len: int = 150,
+) -> List[Tuple[str, str]]:
+    """
+    Because the model will break if sequences over 512 are passed in, and long sentences are slower,
+    allow for dynamically filtering sentences by length for training
+    """
+    return [pair for pair in lines
+            if len(pair[0]) <= max_len  and len(pair[1]) <= max_len]
+
+
 def parse_nmt_output(
         nmt_output: Tuple[str, torch.Tensor]
     ) -> Tuple[str, torch.Tensor]:
@@ -48,8 +60,9 @@ def generate_nmt_output(
     as well as the target gold translation to a pickle file
     """
     lines = read_lines(src_translations_path, trg_translations_path)
+    filtered_lines = filter_by_length(lines)
     nmt_out_lines = [(parse_nmt_output(pretrained_nmt_model.translate(line[0])), line[0], line[1]) 
-                    for line in lines]
+                    for line in filtered_lines]
     pickle.dump(nmt_out_lines, open(output_save_path, 'wb'))
 
 
