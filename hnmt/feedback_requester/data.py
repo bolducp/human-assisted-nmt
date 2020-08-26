@@ -33,10 +33,10 @@ def collate_pad_fn(
     Pads variable-length sequences of word_piece vectors where
     'batch' is a list of tuples like: (sequence of wordpeice tensors, chrf_score)
     """
-    data = [seq[0] for seq in batch]
+
+    data, targets = map(list, zip(*batch))
     # lengths = [len(seq) for seq in data]
     packed_data = pack_sequence(data, enforce_sorted=False) # if I want to use dropout, might need to move this packing into the forward pass
-    targets = [seq[1] for seq in batch]
     return [packed_data, torch.Tensor(targets)]
 
 
@@ -50,6 +50,18 @@ def prediction_collate_pad_fn(
     data = [seq[0] for seq in batch]
     packed_data = pack_sequence(data, enforce_sorted=False)
     return packed_data
+
+
+def collate_pad_with_gold_text(
+        batch: List[Tuple[torch.Tensor, str, str]]
+    ) -> PackedSequence:
+    """
+    Pads variable-length sequences of word_piece vectors where
+    'batch' is a list of tuples like: (sequence of wordpeice tensors, hypo text, gold text)
+    """
+    data, nmt_out_text, gold_texts = map(list, zip(*batch))
+    packed_data = pack_sequence(data, enforce_sorted=False)
+    return [packed_data, nmt_out_text, gold_texts]
 
 
 def generate_source_sent_embeddings(
@@ -106,6 +118,40 @@ def generate_word_piece_sequential_input(
 
         word_piece_steps: torch.Tensor = generate_word_piece_step_tensor(word_piece_vectors, pos_probs, source_sent_embed)
         processed_sent_data.append((word_piece_steps, chrf_score))
+
+    return processed_sent_data
+
+
+def generate_word_piece_sequential_input_keep_gold_text(
+        output: NMT_OUTPUT_TRAIN,
+        source_sent_embeds: List[torch.Tensor]
+    ) -> List[Tuple[torch.Tensor, str, str]]:
+    """
+    Given the nmt output (a list of ((hypo, pos_probs), source_sent, gold_translation) tuples)
+    and the list of source sentence embeddings as input,
+    uses multilingual BERT to get contextualized word-piece embeddings for each
+    predicted word (dim 768), and concats each word-piece embedding with the
+    source sent embedding and the vector of (padded if necessary) probablities
+    """
+    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+    model = BertModel.from_pretrained('bert-base-multilingual-cased', output_hidden_states = True)
+    processed_sent_data = []
+
+    for i in range(len(output)):
+        source_sent_embed: torch.Tensor = source_sent_embeds[i]
+        pos_probs: torch.Tensor = pad_or_truncate(output[i][0][1])
+        input_ids = torch.tensor([tokenizer.encode(output[i][0][0], add_special_tokens=True)])
+
+        with torch.no_grad():
+            last_four_hidden_states = model(input_ids)[2][-4:]
+            last_four_stacked = torch.squeeze(torch.stack(last_four_hidden_states), dim=1)
+            word_piece_vectors = torch.sum(last_four_stacked, dim=0)
+
+        word_piece_steps: torch.Tensor = generate_word_piece_step_tensor(word_piece_vectors, pos_probs, source_sent_embed)
+        nmt_pred: str = output[i][0][0]
+        gold: str = output[i][2]
+
+        processed_sent_data.append((word_piece_steps, nmt_pred, gold))
 
     return processed_sent_data
 

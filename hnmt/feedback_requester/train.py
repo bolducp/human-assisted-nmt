@@ -81,4 +81,6 @@ def run_training():
 
     writer.close()
 
-run_training()
+
+if __name__ == "__main__":
+    run_training()

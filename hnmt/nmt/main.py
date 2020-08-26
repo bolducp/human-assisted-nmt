@@ -49,7 +49,7 @@ def parse_nmt_output(
     return (hypo, pos_probs)
 
 
-def generate_nmt_output(
+def generate_and_save_nmt_output(
         src_translations_path: str,
         trg_translations_path: str, 
         output_save_path: str
@@ -60,10 +60,20 @@ def generate_nmt_output(
     as well as the target gold translation to a pickle file
     """
     lines = read_lines(src_translations_path, trg_translations_path)
-    filtered_lines = filter_by_length(lines)
-    nmt_out_lines = [(parse_nmt_output(pretrained_nmt_model.translate(line[0])), line[0], line[1]) 
-                    for line in filtered_lines]
+    nmt_out_lines = get_nmt_output(lines)
     pickle.dump(nmt_out_lines, open(output_save_path, 'wb'))
+
+
+def get_nmt_output(
+        lines: List[Tuple[str, str]]
+    ) -> Tuple[torch.Tensor, str, str]:
+    """
+    Parses the paralell corpora, runs the pretrained nmt model on the source sentences, 
+    and returns the output results (probability of each word and text translation)
+    """
+    filtered_lines = filter_by_length(lines)
+    return [(parse_nmt_output(pretrained_nmt_model.translate(line[0])), line[0], line[1]) 
+                    for line in filtered_lines]
 
 
 def get_document_nmt_output(
@@ -79,4 +89,4 @@ def get_document_nmt_output(
 if __name__ == "__main__":
     tok_jpn_sents_path = current_dir + "/corpus/spm/kyoto-train.ja"
     tok_en_sents_path =  current_dir + "/corpus/kftt-data-1.0/data/tok/kyoto-train.en"
-    generate_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "nmt_out.p")
+    generate_and_save_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "nmt_out_validation_set.p")
