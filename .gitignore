@@ -86,3 +86,6 @@ hnmt/nmt/fastText
 hnmt/nmt/multi_cased_L-12_H-768_A-12
 preprocessing/opus_out
 preprocessing/opus_filter_training_data.yaml
+hnmt/feedback_requester/preprocessing_outputs
+hnmt/feedback_requester/runs/
+hnmt/feedback_requester/saved/
