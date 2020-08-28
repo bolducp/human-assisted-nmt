@@ -2,7 +2,7 @@ import torch
 import random
 from hnmt.feedback_requester.train import loss_function
 from hnmt.feedback_requester.data import collate_pad_fn, collate_pad_with_gold_text
-
+from hnmt.feedback_requester.experiments.graphs import calculate_time_step_averages
 
 def test_lost_function_1():
     nmt_output = torch.Tensor([0, 0.5, 1, 0])
@@ -38,3 +38,12 @@ def test_collate_pad_with_gold_text_1():
     assert collated[2] == ['I wish I had good news when I can see it this time.',
                             'So where is Strand?',
                             'What if you ask by phone?']
+
+
+def test_calculate_time_step_averages_1():
+    effort_scores = [10, 20, 45, 10, 50, 30, 20, 10, 93, 90]
+    averages_per_3 = calculate_time_step_averages(effort_scores, 3)
+    averages_per_2 = calculate_time_step_averages(effort_scores, 2)
+
+    assert averages_per_3 == [25.0, 27.5, 32.0]
+    assert averages_per_2 == [15.0, 21.25, 27.5, 24.375, 37.8]

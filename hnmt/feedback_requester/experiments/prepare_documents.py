@@ -15,7 +15,7 @@ def main(save_path: str) -> None:
 
     parallel_data = []
 
-    for line in lines[:20000]:
+    for line in lines:
         eng, jpn = line.split('\t')
         tok_jpn = " ".join(tokenizer.encode("".join(jpn.split()), out_type=str))
         parallel_data.append((tok_jpn, eng))
