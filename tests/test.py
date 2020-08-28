@@ -3,6 +3,7 @@ import random
 from hnmt.feedback_requester.train import loss_function
 from hnmt.feedback_requester.data import collate_pad_fn, collate_pad_with_gold_text
 from hnmt.feedback_requester.experiments.graphs import calculate_time_step_averages
+from hnmt.feedback_requester.experiments.prepare_documents import divided_jesc_docs_nmt_output
 
 def test_lost_function_1():
     nmt_output = torch.Tensor([0, 0.5, 1, 0])
@@ -47,3 +48,23 @@ def test_calculate_time_step_averages_1():
 
     assert averages_per_3 == [25.0, 27.5, 32.0]
     assert averages_per_2 == [15.0, 21.25, 27.5, 24.375, 37.8]
+
+
+def test_divided_jesc_docs_nmt_output():
+    lines = ["you seem to be mistaken.	公序良俗に反するレベルだと 思われることのほうが問題だ。",
+             "what a surprise.	驚いたわ",
+             "stirrings?	動揺 ?",
+             "i think it's an inspired idea.	それは見事なアイデアだと思います",
+             "please. sorry, kiddo.	お願い",
+             "i have more invested in this case than any of you assholes.	そこのアホより 多くを費やした",
+             "come on, guys.	さあ、行くわよ!"]
+
+    MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model'
+    final_doc_outputs = divided_jesc_docs_nmt_output(MODEL_PATH, lines, 3)
+
+    assert len(final_doc_outputs) == 3
+    assert type(final_doc_outputs[0][0][0]) == torch.Tensor
+    assert type(final_doc_outputs[0][0][1]) == str
+    assert final_doc_outputs[0][0][2] == 'you seem to be mistaken.'
+
+test_divided_jesc_docs_nmt_output()

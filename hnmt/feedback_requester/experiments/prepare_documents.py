@@ -1,18 +1,21 @@
+from typing import List
 import pickle
-import torch
-from typing import List, Tuple
 import sentencepiece as spm
+from hnmt.utils import chunks
 from hnmt.nmt.main import get_nmt_output
 from hnmt.feedback_requester.data import generate_source_sent_embeddings, generate_word_piece_sequential_input_keep_gold_text
 
-import time
 
-def main(save_path: str) -> None:
-    tokenizer = spm.SentencePieceProcessor(model_file='/Users/paigefink/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model')
-
-    with open('raw_data/jesc_train.txt') as f:
-        lines = f.read().strip().split('\n')
-
+def divided_jesc_docs_nmt_output(
+    model_path: str,
+    lines: List[str],
+    num_sents_per_doc: int = 100,
+) -> None:
+    """
+    Splits, tokenizes the JESC data lines, gets NMT output for the source inputs,
+    and chunks into separate documents of 100 sentences
+    """
+    tokenizer = spm.SentencePieceProcessor(model_file=model_path)
     parallel_data = []
 
     for line in lines:
@@ -21,35 +24,23 @@ def main(save_path: str) -> None:
         parallel_data.append((tok_jpn, eng))
 
     nmt_out = get_nmt_output(parallel_data)
-    documents = list(chunks(nmt_out, 100))
-
-    with open(save_path, 'wb') as f:
-        pickle.dump(documents, f)
-
-
-def finish_preprocessing(file_path, save_path):
-    outs = []
-    with open(file_path, "rb") as f:
-        documents = pickle.load(f)
+    documents = list(chunks(nmt_out, num_sents_per_doc))
+    final_doc_outputs = []
 
     for doc in documents:
         source_sent_embds = generate_source_sent_embeddings(doc)
         final_training_input = generate_word_piece_sequential_input_keep_gold_text(doc, source_sent_embds)
-        outs.append(final_training_input)
+        final_doc_outputs.append(final_training_input)
 
-    pickle.dump(outs, open(save_path, 'wb'))
-
-
-def chunks(
-    sentence_pairs: List[Tuple[str, torch.Tensor, str]], 
-    n: int
-)-> List[Tuple[str, torch.Tensor, str]]:
-    """Yield successive n-sized chunks from sentence_pairs."""
-    for i in range(0, len(sentence_pairs), n):
-        yield sentence_pairs[i:i + n]
+    return final_doc_outputs
 
 
 if __name__ == "__main__":
-    start = time.time()
-    main('/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs.p')
-    print("seconds:", time.time() - start)
+    MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model'
+    with open('raw_data/jesc_train.txt') as f:
+        lines = f.read().strip().split('\n')
+    final_docs = divided_jesc_docs_nmt_output(MODEL_PATH, lines)
+
+    SAVE_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_final.p'
+    with open(SAVE_PATH, 'wb') as f:
+        pickle.dump(final_docs, f)
