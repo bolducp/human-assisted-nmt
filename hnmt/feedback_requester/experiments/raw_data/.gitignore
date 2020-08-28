@@ -1,0 +1,6 @@
+# make sure to add the jesc_train.txt data file to this folder
+# can download the file (need to unzip) from here: https://nlp.stanford.edu/projects/jesc/data/raw.tar.gz
+
+*
+!.gitignore
+

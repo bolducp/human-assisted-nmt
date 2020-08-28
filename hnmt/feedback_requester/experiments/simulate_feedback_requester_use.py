@@ -52,7 +52,14 @@ def main(threshold: float, model_path: str, docs_path: str):
     return doc_effort_scores, doc_bleu_scores, doc_chrf_scores
 
 
-def calculate_effort(x: str, y: str, base_effort: int = 10) -> int:
+def calculate_effort(
+    x: str,
+    y: str,
+    base_effort: int = 10
+) -> int:
+    """
+    Use the python difflib library to help calculate the KSMR variant score between two sentences
+    """
     return len([i for i in ndiff(x, y) if i[0] != ' '])
 
 

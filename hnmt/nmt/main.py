@@ -66,7 +66,7 @@ def generate_and_save_nmt_output(
 
 def get_nmt_output(
         lines: List[Tuple[str, str]]
-    ) -> Tuple[torch.Tensor, str, str]:
+    ) -> List[Tuple[Tuple[str, torch.Tensor], str, str]]:
     """
     Parses the paralell corpora, runs the pretrained nmt model on the source sentences, 
     and returns the output results (probability of each word and text translation)

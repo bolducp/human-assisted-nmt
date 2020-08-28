@@ -1,6 +1,6 @@
 import os
 import pickle
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Any
 import nltk.translate.chrf_score
 from typing import List, Tuple, Optional, Union
 import torch
@@ -35,7 +35,6 @@ def collate_pad_fn(
     """
 
     data, targets = map(list, zip(*batch))
-    # lengths = [len(seq) for seq in data]
     packed_data = pack_sequence(data, enforce_sorted=False) # if I want to use dropout, might need to move this packing into the forward pass
     return [packed_data, torch.Tensor(targets)]
 
@@ -54,7 +53,7 @@ def prediction_collate_pad_fn(
 
 def collate_pad_with_gold_text(
         batch: List[Tuple[torch.Tensor, str, str]]
-    ) -> PackedSequence:
+    ) -> List[Any]:
     """
     Pads variable-length sequences of word_piece vectors where
     'batch' is a list of tuples like: (sequence of wordpeice tensors, hypo text, gold text)
