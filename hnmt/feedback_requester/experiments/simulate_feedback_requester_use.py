@@ -54,7 +54,7 @@ def main(threshold: float, model_path: str, docs_path: str):
 
 
 if __name__ == "__main__":
-    MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/saved/epoch_9.pt'
+    MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/saved_state_dicts/epoch_9.pt'
     DOCS_PATH = "/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_final_20000.p"
     doc_effort_scores, doc_bleu_scores, doc_chrf_scores = main(0.5, MODEL_PATH, DOCS_PATH)
 

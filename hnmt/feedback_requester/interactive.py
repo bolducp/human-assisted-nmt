@@ -13,17 +13,21 @@ from hnmt.feedback_requester.data import generate_source_sent_embeddings, genera
 from hnmt.feedback_requester.model import LSTMClassifier
 from hnmt.feedback_requester.data import NMTOutputDataset, collate_pad_fn, prediction_collate_pad_fn
 
+current_dir = os.path.dirname(os.path.realpath(__file__))
+
 POST_FEEDBACK_STRUCT = Tuple[torch.Tensor, int, str, str] # [(model_pred, was_asked, hypo_str, final_str)]
 
-current_dir = os.path.dirname(os.path.realpath(__file__))
-PATH = current_dir + "/saved/epoch_9.pt"
 
-def main(threshold):
+def main(
+    model_weights_path: str,
+    sent_piece_model_path: str,
+    threshold: float,
+):
     model = LSTMClassifier(1586, 1586)
-    model.load_state_dict(torch.load(PATH))
+    model.load_state_dict(torch.load(model_weights_path))
     optimizer = optim.Adam(model.parameters())
 
-    tokenizer = spm.SentencePieceProcessor(model_file='/Users/paigefink/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model')
+    tokenizer = spm.SentencePieceProcessor(model_file=sent_piece_model_path)
 
     def document_feedback_interaction():
         model.eval()
@@ -68,7 +72,7 @@ def main(threshold):
                 if prediction >= threshold:
                     print("\nSource:", batch[2][i])
                     print("Translation:", nmt_hypo_sent)
-                    user_correction = input("Please correct or press 'Enter' if no change is needed.\n")
+                    user_correction = input("\nPlease correct or press 'Enter' if no change is needed.\n")
 
                     if not user_correction:
                         user_correction = nmt_hypo_sent
@@ -90,8 +94,13 @@ def main(threshold):
         update_model(model, optimizer, post_interactive, posted_edited)
 
         print("\n\nModel updated.\n")
-        translate_new_doc = input("To translate another document enter 'y', to end enter 'n'.\n")
 
+        save_weights = input("To save the model updated model weights, type 's'. Otherwise, enter any key.\n")
+        if save_weights.lower() == 's':
+            torch.save(model.state_dict(), current_dir + "/saved_state_dicts/updated.pt")
+            print("\nModel weights saved at {}.\n".format(current_dir + "/saved_state_dicts/updated.pt"))
+
+        translate_new_doc = input("\nTo translate another document enter 'y', to end enter 'n'.\n")
         if translate_new_doc.lower() == 'n':
             interacting = False
 
@@ -161,3 +170,9 @@ def was_post_edited(
 ) -> bool:
     return post_interactive[3] != post_edited
 
+
+if __name__ == "__main__":
+    MODEL_WEIGHTS_PATH = current_dir + "/saved_state_dicts/epoch_9.pt"
+    SENT_PIECE_MODEL = '/Users/paigefink/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model'
+
+    main(MODEL_WEIGHTS_PATH, SENT_PIECE_MODEL, 0.5)

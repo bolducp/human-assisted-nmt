@@ -89,5 +89,17 @@ Source sentence embeddings: `run_source_sent_embeddings(saved_nmt_out_file, sent
 NMT output word piece embeddings/final configuration: `run_final_preprocessing(current_dir + '/preprocessing_outputs/final_out_sample.p')`
 
 
-### Training the feedback-requester model
+## Training the feedback-requester model
 `python3 train.py`
+
+
+
+## Command Line Interactive Version
+In the file `hnmt/feedback_requestor/interactive.py`, make sure that the following variables are set to match your local paths:
+
+`MODEL_WEIGHTS_PATH`
+`SENT_PIECE_MODEL`
+
+From inside the `feedback_requestor` directory, run interactive.py and follow the prompts:
+
+`python3 interactive.py`

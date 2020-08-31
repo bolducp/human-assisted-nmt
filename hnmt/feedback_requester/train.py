@@ -61,7 +61,7 @@ def run_training():
         train_loss = train(model, dataloader, optimizer, loss_function)
         print("train loss (epoch {}):".format(epoch), train_loss)
         writer.add_scalar("Loss/train", train_loss, epoch)
-        torch.save(model.state_dict(), current_dir + "/saved/epoch_{}.pt".format(epoch))
+        torch.save(model.state_dict(), current_dir + "/saved_state_dicts/epoch_{}.pt".format(epoch))
 
         model.eval()
         with torch.no_grad():
