@@ -40,15 +40,15 @@ def collate_pad_fn(
 
 
 def prediction_collate_pad_fn(
-        batch: List[Tuple[torch.Tensor, None]]
-    ) -> PackedSequence:
+        batch: List[Tuple[str, torch.Tensor, str]]
+    ) -> List[Union[PackedSequence, str]]:
     """
     Pads variable-length sequences of word_piece vectors where
     'batch' is a list of tuples like: (sequence of wordpeice tensors, None)
     """
-    data = [seq[0] for seq in batch]
+    source_sents, data, nmt_outs = map(list, zip(*batch))
     packed_data = pack_sequence(data, enforce_sorted=False)
-    return packed_data
+    return [packed_data, nmt_outs, source_sents]
 
 
 def collate_pad_with_gold_text(
@@ -117,6 +117,38 @@ def generate_word_piece_sequential_input(
 
         word_piece_steps: torch.Tensor = generate_word_piece_step_tensor(word_piece_vectors, pos_probs, source_sent_embed)
         processed_sent_data.append((word_piece_steps, chrf_score))
+
+    return processed_sent_data
+
+def generate_word_piece_sequential_input_for_inference(
+        source_sents: List[str],
+        output: NMT_OUTPUT_EVAL,
+        source_sent_embeds: List[torch.Tensor],
+    ) -> List[Tuple[str, torch.Tensor, str]]:
+    """
+    Given the list of source sents, the nmt output (a list of ((hypo, pos_probs), source_sent) tuples)
+    and the list of source sentence embeddings as input,
+    uses multilingual BERT to get contextualized word-piece embeddings for each
+    predicted word (dim 768), and concats each word-piece embedding with the
+    source sent embedding and the vector of (padded if necessary) probablities
+    """
+    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+    model = BertModel.from_pretrained('bert-base-multilingual-cased', output_hidden_states = True)
+    processed_sent_data = []
+
+    for i in range(len(output)):
+        source_sent_embed: torch.Tensor = source_sent_embeds[i]
+        pos_probs: torch.Tensor = pad_or_truncate(output[i][0][1])
+        nmt_pred: str = output[i][0][0]
+
+        input_ids = torch.tensor([tokenizer.encode(nmt_pred, add_special_tokens=True)])
+        with torch.no_grad():
+            last_four_hidden_states = model(input_ids)[2][-4:]
+            last_four_stacked = torch.squeeze(torch.stack(last_four_hidden_states), dim=1)
+            word_piece_vectors = torch.sum(last_four_stacked, dim=0)
+
+        word_piece_steps: torch.Tensor = generate_word_piece_step_tensor(word_piece_vectors, pos_probs, source_sent_embed)
+        processed_sent_data.append((source_sents[i], word_piece_steps, nmt_pred))
 
     return processed_sent_data
 

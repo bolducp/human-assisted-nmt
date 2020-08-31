@@ -1,5 +1,4 @@
 import os
-from typing import Callable
 import torch
 from torch import Tensor
 from torch.utils.data import DataLoader

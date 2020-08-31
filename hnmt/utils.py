@@ -1,6 +1,7 @@
 import os
-import torch
 from typing import List, Tuple, Generator
+from difflib import ndiff
+import torch
 
 
 def get_root_directory():
@@ -14,3 +15,14 @@ def chunks(
     """Yield successive n-sized chunks from sentence_pairs."""
     for i in range(0, len(sentence_pairs), n):
         yield sentence_pairs[i:i + n]
+
+
+def calculate_effort(
+    x: str,
+    y: str,
+    base_effort: int = 10
+) -> int:
+    """
+    Use the python difflib library to help calculate the KSMR variant score between two sentences
+    """
+    return len([i for i in ndiff(x, y) if i[0] != ' '])

@@ -1,15 +1,15 @@
-import sys
-from hnmt.nmt.main import get_document_nmt_output
-from hnmt.feedback_requester.data import generate_source_sent_embeddings, generate_word_piece_sequential_input
-import sentencepiece as spm
-from hnmt.feedback_requester.model import LSTMClassifier
-import torch
-import pickle
 import os
-import sacrebleu
+import sys
+import pickle
 from difflib import ndiff
+import torch
 from torch.utils.data import DataLoader
-from hnmt.feedback_requester.data import NMTOutputDataset, collate_pad_fn, prediction_collate_pad_fn, collate_pad_with_gold_text
+import sentencepiece as spm
+import sacrebleu
+from hnmt.utils import calculate_effort
+from hnmt.nmt.main import get_document_nmt_output
+from hnmt.feedback_requester.model import LSTMClassifier
+from hnmt.feedback_requester.data import collate_pad_with_gold_text
 
 
 def main(threshold: float, model_path: str, docs_path: str):
@@ -50,17 +50,6 @@ def main(threshold: float, model_path: str, docs_path: str):
         doc_chrf_scores.append(chrf_score)
 
     return doc_effort_scores, doc_bleu_scores, doc_chrf_scores
-
-
-def calculate_effort(
-    x: str,
-    y: str,
-    base_effort: int = 10
-) -> int:
-    """
-    Use the python difflib library to help calculate the KSMR variant score between two sentences
-    """
-    return len([i for i in ndiff(x, y) if i[0] != ' '])
 
 
 
