@@ -1,7 +1,7 @@
 import os
 import sys
 import pickle
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from difflib import ndiff
 import torch
 from torch.utils.data import DataLoader
@@ -111,12 +111,12 @@ def do_policy_feedback_and_post_edit(
     gold_translation: str,
     policy: int
 ) -> Tuple[float, str]:
-"""
+    """
     Return the sentence effort score and the final translation based on the policy.
     Policy #1: the translator will fully correct each sentence always (when prompted or post-editing)
     Policy #2:  if asked by the feedback-requester and the chrF score is <= 0.95:  fix/replace
-                if not asked by the feedback-requester (i.e. post-editing) and the chrF score is <= 0.70: fix/replace
-"""
+    if not asked by the feedback-requester (i.e. post-editing) and the chrF score is <= 0.70: fix/replace
+    """
     if policy == 1:
         sent_effort_score = calculate_effort(nmt_hypo, gold_translation)
         return sent_effort_score, gold_translation
@@ -135,10 +135,10 @@ def policy_post_edit_for_updating(
     gold_translation: str,
     policy: int
 ) -> str:
-"""
+    """
     Policy #1: the translator will fully correct each sentence always (when prompted or post-editing)
     Policy #2:  if not asked by the feedback-requester (i.e. post-editing) and the chrF score is <= 0.70: fix/replace
-"""
+    """
     if policy == 1:
         return gold_translation
     else:

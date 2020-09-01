@@ -9,7 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 def loss_function(nmt_output: Tensor, chrf_scores: Tensor) -> float:
-    return sum((nmt_output * chrf_scores) + ((1 - nmt_output) * (1 - chrf_scores)))
+    return sum(1.75 * (nmt_output * chrf_scores) + ((1 - nmt_output) * (1 - chrf_scores)))
 
 
 def train(
@@ -43,15 +43,18 @@ def train(
 
 
 
-def run_training():
+def run_training(
+    train_file_name: str,
+    validation_file_name: str
+):
     writer = SummaryWriter()
 
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    dataset = NMTOutputDataset(current_dir + "/preprocessing_outputs/final_out_sample.p")
-    dataloader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers=4, collate_fn=collate_pad_fn, pin_memory=True)
+    dataset = NMTOutputDataset(current_dir + "/preprocessing_outputs/{}.p".format(train_file_name))
+    dataloader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=4, collate_fn=collate_pad_fn, pin_memory=True)
 
-    validation_set = NMTOutputDataset(current_dir + "/preprocessing_outputs/final_out_validation_set_2000.p")
-    valid_dataloader = DataLoader(validation_set, batch_size=16, shuffle=True, num_workers=4, collate_fn=collate_pad_fn, pin_memory=True)
+    validation_set = NMTOutputDataset(current_dir + "/preprocessing_outputs/{}.p".format(validation_file_name))
+    valid_dataloader = DataLoader(validation_set, batch_size=64, shuffle=True, num_workers=4, collate_fn=collate_pad_fn, pin_memory=True)
 
     N_EPOCHS = 10
     model = LSTMClassifier(1586, 1586)
@@ -82,4 +85,4 @@ def run_training():
 
 
 if __name__ == "__main__":
-    run_training()
+    run_training("final_out_3k", "final_out_1k_validation")

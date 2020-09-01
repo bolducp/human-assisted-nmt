@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils.rnn import pad_packed_sequence
@@ -26,6 +27,6 @@ class LSTMClassifier(nn.Module):
 		batch_indices = [i for i in range(len(seq_lengths))]
 		outputs = outputs[batch_indices, seq_len_indices, :]
 
-		final_output = self.sigmoid(outputs)
+		final_output = self.sigmoid(outputs * torch.tensor(0.2))
 
 		return final_output
