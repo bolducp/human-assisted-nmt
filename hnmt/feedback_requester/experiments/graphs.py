@@ -4,6 +4,7 @@ from typing import List, Union, Tuple, Dict
 import torch
 import pickle
 
+current_dir = os.path.dirname(os.path.realpath(__file__))
 CATEGORY = List[Union[int, float]]
 
 def plot_score_and_acc_over_docs(
@@ -11,8 +12,8 @@ def plot_score_and_acc_over_docs(
     stats: Dict[str, Union[int, float]],
     per_docs: int = 1
 ) -> None:
-    if not os.path.exists("plots/" + run_name):
-        os.makedirs("plots/" + run_name)
+    if not os.path.exists(current_dir + "/plots/" + run_name):
+        os.makedirs(current_dir + "/plots/" + run_name)
 
     averages = calculate_averages(stats, per_docs)
     num_docs = [count for count in range(per_docs, len(stats['ksmr']) + 1, per_docs)]
@@ -32,7 +33,7 @@ def save_plot_image(
     plt.xlabel('Num Docs')
     plt.ylabel(title)
     plt.legend()
-    plt.savefig('plots/{}.png'.format(title))
+    plt.savefig(current_dir + '/plots/{}.png'.format(title))
     plt.close()
 
 
@@ -55,9 +56,10 @@ def calculate_time_step_averages(
     chunk_indexes = [i for i in range(per_docs, len(scores) + 1, per_docs)]
     averages = []
 
-    for i in chunk_indexes:
-        up_to_index = scores[0: i]
-        average = sum(up_to_index) / len(up_to_index)
+    for i, count in enumerate(chunk_indexes):
+        starting_i = 0 if i == 0 else chunk_indexes[i - 1]
+        docs = scores[starting_i: count]
+        average = sum(docs) / per_docs
         averages.append(average)
 
     return averages

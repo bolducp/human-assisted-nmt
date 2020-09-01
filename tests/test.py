@@ -9,7 +9,7 @@ def test_lost_function_1():
     nmt_output = torch.Tensor([0, 0.5, 1, 0])
     chrf_scores = torch.Tensor([4, 10, 8, 10])
 
-    assert loss_function(nmt_output, chrf_scores) == torch.Tensor([-3.5]), 'incorrect loss return value'
+    assert loss_function(nmt_output, chrf_scores) == torch.Tensor([6.25]), 'incorrect loss return value'
 
 
 def test_collate_pad_1():
@@ -46,8 +46,8 @@ def test_calculate_time_step_averages_1():
     averages_per_3 = calculate_time_step_averages(effort_scores, 3)
     averages_per_2 = calculate_time_step_averages(effort_scores, 2)
 
-    assert averages_per_3 == [25.0, 27.5, 32.0]
-    assert averages_per_2 == [15.0, 21.25, 27.5, 24.375, 37.8]
+    assert averages_per_3 == [25.0, 30.0, 41.0]
+    assert averages_per_2 == [15.0, 27.5, 40.0, 15.0, 91.5]
 
 
 def test_divided_jesc_docs_nmt_output():
@@ -67,4 +67,9 @@ def test_divided_jesc_docs_nmt_output():
     assert type(final_doc_outputs[0][0][1]) == str
     assert final_doc_outputs[0][0][2] == 'you seem to be mistaken.'
 
+
+test_lost_function_1()
+test_collate_pad_1()
+test_collate_pad_with_gold_text_1()
+test_calculate_time_step_averages_1()
 test_divided_jesc_docs_nmt_output()
