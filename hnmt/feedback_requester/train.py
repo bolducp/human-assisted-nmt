@@ -85,4 +85,4 @@ def run_training(
 
 
 if __name__ == "__main__":
-    run_training("final_out_3k", "final_out_1k_validation")
+    run_training("final_out_100000", "final_out_valid_300_to_320k")

@@ -75,7 +75,7 @@ def generate_source_sent_embeddings(
     output_sent_embeds = []
 
     for sent in output:
-        input_ids = torch.tensor([tokenizer.encode(sent[1][1:], add_special_tokens=True)])
+        input_ids = torch.tensor([tokenizer.encode(sent[1][1:][:510], add_special_tokens=True)])
         with torch.no_grad():
             model_out = model(input_ids)
             token_vecs = model_out[2][-2][0]
@@ -109,7 +109,7 @@ def generate_word_piece_sequential_input(
         else:
             chrf_score = None
 
-        input_ids = torch.tensor([tokenizer.encode(output[i][0][0], add_special_tokens=True)])
+        input_ids = torch.tensor([tokenizer.encode(output[i][0][0][:510], add_special_tokens=True)])
         with torch.no_grad():
             last_four_hidden_states = model(input_ids)[2][-4:]
             last_four_stacked = torch.squeeze(torch.stack(last_four_hidden_states), dim=1)
