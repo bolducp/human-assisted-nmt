@@ -55,9 +55,13 @@ $ git checkout hnmt
 $ cd fairseq
 $ pip install ./
 ```
+
 **2.** Download the pretrained model from the JParaCrawl [website](http://www.kecl.ntt.co.jp/icl/lirg/jparacrawl/). There are three sizes available (small, base, and large). Make sure that the `checkpoint_file` parameter used to instaniate the `pretrained_nmt_model` in `nmt/main.py` correctly references the size of the model you downloaded.
+
 **3.** Create a sub-folder in `nmt` called `pretrained_model_jaen` for the pretrained model (should include `dict.en.txt`, `dict.ja.txt`, `LICENSE`, and the model file, e.g. `small.pretrain.pt`).
+
 **4.** Ensure that the `tok_jpn_sents_path` and `tok_en_sents_path` variables in `nmt/main.py` point to your local data paths.
+
 **5.** Run `python3 main.py`, which will save the pickled output to a file called `nmt_out.p` in the `nmt` directory.
 
 ### Using output from a different NMT system

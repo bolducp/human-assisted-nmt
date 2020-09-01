@@ -20,9 +20,9 @@ def chunks(
 def calculate_effort(
     x: str,
     y: str,
-    base_effort: int = 10
+    base_effort: int = 25
 ) -> int:
     """
     Use the python difflib library to help calculate the KSMR variant score between two sentences
     """
-    return len([i for i in ndiff(x, y) if i[0] != ' '])
+    return len([i for i in ndiff(x, y) if i[0] != ' ']) + base_effort
