@@ -12,7 +12,12 @@ from hnmt.feedback_requester.model import LSTMClassifier
 from hnmt.feedback_requester.data import collate_pad_with_gold_text
 
 
-def main(threshold: float, model_path: str, docs_path: str):
+def main(
+    threshold: float,
+    model_path: str,
+    docs_path: str,
+    online_learning: bool = False
+):
     model = LSTMClassifier(1586, 1586)
     model.load_state_dict(torch.load(model_path))
     model.eval()

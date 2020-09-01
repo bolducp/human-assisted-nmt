@@ -9,13 +9,13 @@ from torch.utils.data import DataLoader
 
 from hnmt.utils import calculate_effort
 from hnmt.nmt.main import get_document_nmt_output
-from hnmt.feedback_requester.data import generate_source_sent_embeddings, generate_word_piece_sequential_input, generate_word_piece_sequential_input_for_inference
+from hnmt.feedback_requester.data import generate_source_sent_embeddings, \
+    generate_word_piece_sequential_input, generate_word_piece_sequential_input_for_inference
 from hnmt.feedback_requester.model import LSTMClassifier
 from hnmt.feedback_requester.data import NMTOutputDataset, collate_pad_fn, prediction_collate_pad_fn
+from hnmt.feedback_requester.update import POST_FEEDBACK_STRUCT, calculate_post_edited_loss, update_model
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
-
-POST_FEEDBACK_STRUCT = Tuple[torch.Tensor, int, str, str] # [(model_pred, was_asked, hypo_str, final_str)]
 
 
 def main(
@@ -32,7 +32,8 @@ def main(
     def document_feedback_interaction():
         model.eval()
 
-        print("\n\n\n\nPaste your document here, one sentence per line. When finished, type Crtl+D.")
+        print("\n\n\n\nPaste your document here, one sentence per line.")
+        print("When finished enter a new line and then type Crtl+D.\n")
         document_to_translate = sys.stdin.read().split("\n")
         sents_to_translate = [sent for sent in document_to_translate if sent]
 
@@ -120,55 +121,6 @@ def post_editing(
     assert len(post_interactive) == len(posted_edited_doc)
     return posted_edited_doc
 
-
-def update_model(
-        model: LSTMClassifier,
-        optimizer,
-        post_interactive: List[POST_FEEDBACK_STRUCT],
-        post_edited: List[str]
-    ) -> float:
-    model.train()
-    optimizer.zero_grad()
-    loss = calculate_post_edited_loss(post_interactive, post_edited)
-    # print("Doc loss", loss)
-    loss.backward()
-    optimizer.step()
-    return loss.item()
-
-
-def calculate_post_edited_loss(
-    post_interactive: List[POST_FEEDBACK_STRUCT],
-    post_edited: List[str]
-):
-    loss = torch.tensor(0)
-
-    for i in range(len(post_interactive)):
-        model_pred = post_interactive[i][0]
-        nmt_hypo = post_interactive[i][2]
-        final_sent = post_edited[i]
-
-        if was_asked(post_interactive[i]):
-            chrf_score = torch.tensor(sacrebleu.sentence_chrf(nmt_hypo, [final_sent]).score)
-            loss = loss + (model_pred * chrf_score) + ((1 - model_pred) * (1 - chrf_score))
-        elif was_post_edited(post_interactive[i], post_edited[i]):
-            chrf_score = torch.tensor(sacrebleu.sentence_chrf(nmt_hypo, [final_sent]).score)
-            loss = loss + ((1 - model_pred) * (1 - chrf_score))
-        else:
-            loss = loss + model_pred
-    return loss
-
-
-def was_asked(
-    post_interactive: POST_FEEDBACK_STRUCT
-) -> bool:
-    return post_interactive[1] == 1
-
-
-def was_post_edited(
-    post_interactive: POST_FEEDBACK_STRUCT,
-    post_edited: str
-) -> bool:
-    return post_interactive[3] != post_edited
 
 
 if __name__ == "__main__":
