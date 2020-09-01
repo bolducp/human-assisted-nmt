@@ -8,7 +8,7 @@ from hnmt.feedback_requester.model import LSTMClassifier
 from torch.utils.tensorboard import SummaryWriter
 
 
-def loss_function(nmt_output: Tensor, chrf_scores: Tensor) -> float:
+def loss_function(nmt_output: Tensor, chrf_scores: Tensor):
     return sum(1.75 * (nmt_output * chrf_scores) + ((1 - nmt_output) * (1 - chrf_scores)))
 
 
@@ -85,4 +85,4 @@ def run_training(
 
 
 if __name__ == "__main__":
-    run_training("final_out_100000", "final_out_valid_300_to_320k")
+    run_training("final_out_3k", "final_out_1k_validation")

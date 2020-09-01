@@ -89,4 +89,4 @@ def get_document_nmt_output(
 if __name__ == "__main__":
     tok_jpn_sents_path = current_dir + "/corpus/spm/kyoto-train.ja"
     tok_en_sents_path =  current_dir + "/corpus/kftt-data-1.0/data/tok/kyoto-train.en"
-    generate_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "nmt_out_300_to_320k_validation.p")
+    generate_and_save_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "nmt_out_300_to_320k_validation.p")

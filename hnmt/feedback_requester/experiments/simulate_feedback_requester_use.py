@@ -28,6 +28,9 @@ def main(
     effort_scores = []
     bleu_scores = []
     chrf_scores = []
+    orig_bleu = []
+    orig_chrf = []
+    precent_sents_requested = []
 
     with open(docs_path, "rb") as f:
         documents = pickle.load(f)
@@ -38,6 +41,7 @@ def main(
         document_effort = 0
         gold_translations = [x[2] for x in document]
         post_interactive = []
+        total_requested = 0
 
         for batch in dataloader:
             predictions = model(batch[0]).squeeze()
@@ -47,6 +51,7 @@ def main(
                 gold_translation = batch[2][i]
 
                 if prediction >= threshold:
+                    total_requested += 1
                     sent_effort_score, final_sent = do_policy_feedback_and_post_edit(nmt_hypo,
                                                                                     gold_translation,
                                                                                     policy)
@@ -60,12 +65,38 @@ def main(
         doc_bleu_score, doc_chrf_score = calculate_bleu_and_chrf_scores(post_interactive,
                                                                         online_learning,
                                                                         gold_translations)
-
         effort_scores.append(document_effort)
         bleu_scores.append(doc_bleu_score)
         chrf_scores.append(doc_chrf_score)
 
-    return effort_scores, bleu_scores, chrf_scores
+        orig_out_bleu, orig_out_chrf, percent_requested = calculate_additional_stats(document,
+                                                                                    gold_translations,
+                                                                                    total_requested)
+        orig_bleu.append(orig_out_bleu)
+        orig_chrf.append(orig_out_chrf)
+        precent_sents_requested.append(percent_requested)
+
+    return {
+        'ksmr': effort_scores,
+        'post_feedback_bleu': bleu_scores,
+        'post_feedback_chrf': chrf_scores,
+        'orig_nmt_out_bleu': orig_bleu,
+        'orig_nmt_out_chrf': orig_chrf,
+        'percent_sent_requested': precent_sents_requested
+    }
+
+
+def calculate_additional_stats(
+    document: List[Tuple[torch.Tensor, str, str]],
+    gold_translations: List[str],
+    total_requested: int
+):
+    nmt_out_sents = [x[1] for x in document]
+    original_nmt_output_bleu = sacrebleu.corpus_bleu(nmt_out_sents, [gold_translations], lowercase=True).score
+    original_nmt_output_chrf = sacrebleu.corpus_chrf(nmt_out_sents, [gold_translations]).score
+    percent_requested = total_requested / len(document)
+
+    return original_nmt_output_bleu, original_nmt_output_chrf, percent_requested
 
 
 def get_prompted_feedback(
@@ -151,8 +182,8 @@ def policy_post_edit_for_updating(
 
 if __name__ == "__main__":
     MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/saved_state_dicts/epoch_9.pt'
-    DOCS_PATH = "/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_final_20000.p"
-    doc_effort_scores, doc_bleu_scores, doc_chrf_scores = main(0.5, MODEL_PATH, DOCS_PATH)
+    DOCS_PATH = "/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_8k_sents.p"
+    stats = main(0.5, MODEL_PATH, DOCS_PATH)
 
-    with open("/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/scores.p", 'wb') as f:
-        pickle.dump([doc_effort_scores, doc_bleu_scores, doc_chrf_scores], f)
+    with open("/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/scores_e9.p", 'wb') as f:
+        pickle.dump(stats, f)

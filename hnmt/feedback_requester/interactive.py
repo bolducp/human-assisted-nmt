@@ -51,7 +51,7 @@ def main(
 
         dataloader = DataLoader(final_output,
                                 batch_size=32,
-                                shuffle=True,
+                                shuffle=False,
                                 num_workers=4,
                                 collate_fn=prediction_collate_pad_fn,
                                 pin_memory=True)

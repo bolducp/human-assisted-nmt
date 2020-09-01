@@ -1,22 +1,25 @@
+import os
 import matplotlib.pyplot as plt
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Dict
 import torch
 import pickle
 
-            # Effort scores,  BLEU scores,  chrF scores
-CATEGORIES = Tuple[List[int], List[float], List[float]]
 CATEGORY = List[Union[int, float]]
 
 def plot_score_and_acc_over_docs(
-    score_lists: CATEGORIES,
-    per_docs: int = 1,
+    run_name: str,
+    stats: Dict[str, Union[int, float]],
+    per_docs: int = 1
 ) -> None:
-    averages = calculate_averages(score_lists, per_docs)
-    num_docs = [count for count in range(per_docs, len(score_lists[0]) + 1, per_docs)]
+    if not os.path.exists("plots/" + run_name):
+        os.makedirs("plots/" + run_name)
 
-    save_plot_image(num_docs, averages[0], 'KSMR')
-    save_plot_image(num_docs, averages[1], 'BLEU')
-    save_plot_image(num_docs, averages[2], 'ChrF')
+    averages = calculate_averages(stats, per_docs)
+    num_docs = [count for count in range(per_docs, len(stats['ksmr']) + 1, per_docs)]
+
+    save_plot_image(num_docs, averages[0], '{}/KSMR'.format(run_name))
+    save_plot_image(num_docs, averages[1], '{}/BLEU'.format(run_name))
+    save_plot_image(num_docs, averages[2], '{}/ChrF'.format(run_name))
 
 
 def save_plot_image(
@@ -34,11 +37,12 @@ def save_plot_image(
 
 
 def calculate_averages(
-    scores_lists: CATEGORIES,
+    stats: Dict[str, Union[int, float]],
     per_docs: int,
 ) -> List[Union[List[int], List[float]]]:
-    return [calculate_time_step_averages(scores, per_docs) 
-            for scores in scores_lists]
+    categories = ['ksmr', 'post_feedback_bleu', 'post_feedback_chrf']
+    return [calculate_time_step_averages(stats[category], per_docs)
+            for category in categories]
 
 
 def calculate_time_step_averages(
@@ -58,10 +62,11 @@ def calculate_time_step_averages(
 
     return averages
 
+
 if __name__ == "__main__":
-    file_name = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/scores.p'
+    file_name = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/scores_e9.p'
 
     with open(file_name, "rb") as f:
-        score_lists = pickle.load(f)
+        stats = pickle.load(f)
 
-    plot_score_and_acc_over_docs(score_lists)
+    plot_score_and_acc_over_docs('run_0', stats)

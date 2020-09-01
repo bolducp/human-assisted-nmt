@@ -9,7 +9,7 @@ from hnmt.feedback_requester.data import generate_source_sent_embeddings, genera
 def divided_jesc_docs_nmt_output(
     model_path: str,
     lines: List[str],
-    num_sents_per_doc: int = 100,
+    num_sents_per_doc: int = 50,
 ) -> None:
     """
     Splits, tokenizes the JESC data lines, gets NMT output for the source inputs,
@@ -41,6 +41,6 @@ if __name__ == "__main__":
         lines = f.read().strip().split('\n')
     final_docs = divided_jesc_docs_nmt_output(MODEL_PATH, lines)
 
-    SAVE_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_final.p'
+    SAVE_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_8k_sents.p'
     with open(SAVE_PATH, 'wb') as f:
         pickle.dump(final_docs, f)
