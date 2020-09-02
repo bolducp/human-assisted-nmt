@@ -56,7 +56,7 @@ def main(
                                                                                     gold_translation,
                                                                                     policy)
                     document_effort += sent_effort_score
-                    feedback = get_prompted_feedback(online_learning, prediction, nmt_hypo, final_sent, gold_translation)
+                    feedback = get_prompted_feedback(online_learning, prediction, nmt_hypo, final_sent)
                     post_interactive.append(feedback)
                 else:
                     no_feedback_struct = get_unprompted_struct(online_learning, prediction, nmt_hypo)
@@ -103,12 +103,11 @@ def get_prompted_feedback(
     online_learning: bool,
     prediction: torch.Tensor,
     nmt_hypo: str,
-    final_sent: str,
-    gold_translation: str
+    final_sent: str
 ) -> Union[str, POST_FEEDBACK_STRUCT]:
     if online_learning:
         return (prediction, 1, nmt_hypo, final_sent)
-    return gold_translation
+    return final_sent
 
 
 def get_unprompted_struct(
@@ -183,7 +182,11 @@ def policy_post_edit_for_updating(
 if __name__ == "__main__":
     MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/saved_state_dicts/epoch_9.pt'
     DOCS_PATH = "/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_8k_sents.p"
-    stats = main(0.5, MODEL_PATH, DOCS_PATH)
+    policy_1_stats = main(0.5, MODEL_PATH, DOCS_PATH)
+    policy_2_stats = main(0.5, MODEL_PATH, DOCS_PATH, policy=2)
 
-    with open("/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/scores_e9.p", 'wb') as f:
-        pickle.dump(stats, f)
+    with open("/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/scores_pol_1.p", 'wb') as f:
+        pickle.dump(policy_1_stats, f)
+
+    with open("/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/scores_pol_2.p", 'wb') as f:
+        pickle.dump(policy_2_stats, f)
