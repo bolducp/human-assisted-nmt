@@ -18,32 +18,48 @@ def plot_score_and_acc_over_docs(
     averages = calculate_averages(stats, per_docs)
     num_docs = [count for count in range(per_docs, len(stats['ksmr']) + 1, per_docs)]
 
-    save_plot_image(num_docs, averages[0], '{}/KSMR'.format(run_name))
-    save_plot_image(num_docs, averages[1], '{}/BLEU'.format(run_name))
-    save_plot_image(num_docs, averages[2], '{}/ChrF'.format(run_name))
+    bleu_improvement_avg = calculate_score_improvement_averages(stats['orig_nmt_out_bleu'],
+                                                                averages['post_feedback_bleu'])
+    chrf_improvement_avg = calculate_score_improvement_averages(stats['orig_nmt_out_chrf'],
+                                                                averages['post_feedback_chrf'])
+
+    save_plot_image(num_docs, averages['ksmr'], 'KSMR', run_name)
+    save_plot_image(num_docs, averages['orig_nmt_out_bleu'], 'Original BLEU', run_name)
+    save_plot_image(num_docs, averages['orig_nmt_out_chrf'], 'Original Chrf', run_name)
+    save_plot_image(num_docs, averages['post_feedback_bleu'], 'Post Feedback BLEU', run_name)
+    save_plot_image(num_docs, averages['post_feedback_chrf'], 'Post Feedback ChrF', run_name)
+    save_plot_image(num_docs, averages['percent_sent_requested'], 'Percent Sents Requested', run_name)
+    save_plot_image(num_docs, bleu_improvement_avg, 'Bleu Improvement', run_name)
+    save_plot_image(num_docs, chrf_improvement_avg, 'Chrf Improvement', run_name)
 
 
 def save_plot_image(
     num_docs: List[int],
     averages: CATEGORY,
-    title: str
+    title: str,
+    folder_name: str
 ) -> None:
     plt.plot(num_docs, averages, 'g', label='No updates')
-    plt.title('{} Score Averages at Num Docs'.format(title))
+    plt.title('{} Averages'.format(title))
     plt.xlabel('Num Docs')
     plt.ylabel(title)
     plt.legend()
-    plt.savefig(current_dir + '/plots/{}.png'.format(title))
+    plt.savefig(current_dir + '/plots/{}/{}.png'.format(folder_name, title))
     plt.close()
 
 
 def calculate_averages(
     stats: Dict[str, Union[int, float]],
     per_docs: int,
-) -> List[Union[List[int], List[float]]]:
-    categories = ['ksmr', 'post_feedback_bleu', 'post_feedback_chrf']
-    return [calculate_time_step_averages(stats[category], per_docs)
-            for category in categories]
+) -> Dict[str, Union[List[int], List[float]]]:
+    categories = ['ksmr', 'post_feedback_bleu', 'post_feedback_chrf', 'percent_sent_requested',
+                  'orig_nmt_out_bleu', 'orig_nmt_out_chrf']
+    averages = {}
+
+    for category in categories:
+        avgs = calculate_time_step_averages(stats[category], per_docs)
+        averages[category] = avgs
+    return averages
 
 
 def calculate_time_step_averages(
@@ -63,6 +79,15 @@ def calculate_time_step_averages(
         averages.append(average)
 
     return averages
+
+
+def calculate_score_improvement_averages(
+    original_score_avgs: List[float],
+    post_feedback_score_avgs: List[float]
+) -> List[float]:
+    return [post_feedback_ave - orig_avg
+            for post_feedback_ave, orig_avg
+            in zip(post_feedback_score_avgs, original_score_avgs)]
 
 
 if __name__ == "__main__":
