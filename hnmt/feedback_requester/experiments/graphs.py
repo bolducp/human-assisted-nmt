@@ -18,9 +18,9 @@ def plot_score_and_acc_over_docs(
     averages = calculate_averages(stats, per_docs)
     num_docs = [count for count in range(per_docs, len(stats['ksmr']) + 1, per_docs)]
 
-    bleu_improvement_avg = calculate_score_improvement_averages(stats['orig_nmt_out_bleu'],
+    bleu_improvement_avg = calculate_score_improvement_averages(averages['orig_nmt_out_bleu'],
                                                                 averages['post_feedback_bleu'])
-    chrf_improvement_avg = calculate_score_improvement_averages(stats['orig_nmt_out_chrf'],
+    chrf_improvement_avg = calculate_score_improvement_averages(averages['orig_nmt_out_chrf'],
                                                                 averages['post_feedback_chrf'])
 
     save_plot_image(num_docs, averages['ksmr'], 'KSMR', run_name)
@@ -32,8 +32,8 @@ def plot_score_and_acc_over_docs(
     save_plot_image(num_docs, bleu_improvement_avg, 'Bleu Improvement', run_name)
     save_plot_image(num_docs, chrf_improvement_avg, 'ChrF Improvement', run_name)
 
-    save_plot_map_ksmr_against_score(stats['ksmr'], stats['post_feedback_bleu'], run_name, 'BLEU')
-    save_plot_map_ksmr_against_score(stats['ksmr'], stats['post_feedback_chrf'], run_name, 'ChrF')
+    save_plot_map_ksmr_against_score_improvement(averages['ksmr'], bleu_improvement_avg, run_name, 'BLEU')
+    save_plot_map_ksmr_against_score_improvement(averages['ksmr'], chrf_improvement_avg, run_name, 'ChrF')
 
 
 def save_plot_image(
@@ -42,7 +42,7 @@ def save_plot_image(
     title: str,
     folder_name: str
 ) -> None:
-    plt.plot(num_docs, averages, 'g', label='No updates')
+    plt.plot(num_docs, averages, 'go--', label='No updates')
     plt.title('{} Averages'.format(title))
     plt.xlabel('Num Docs')
     plt.ylabel(title)
@@ -93,20 +93,20 @@ def calculate_score_improvement_averages(
             in zip(post_feedback_score_avgs, original_score_avgs)]
 
 
-def save_plot_map_ksmr_against_score(
+def save_plot_map_ksmr_against_score_improvement(
     ksmr_scores: List[int],
-    eval_scores: List[float],
+    eval_improvement_scores: List[float],
     run_name: str,
     title: str
 ):
-    ksmr_values, scores = zip(*sorted(zip(ksmr_scores, eval_scores)))
+    ksmr_values, scores = zip(*sorted(zip(ksmr_scores, eval_improvement_scores)))
 
-    plt.plot(ksmr_values, scores, 'g', label='No updates')
-    plt.title('{} Scores Across KSMR'.format(title))
+    plt.plot(ksmr_values, scores, 'go--', label='No updates')
+    plt.title('{} Improvement Across KSMR'.format(title))
     plt.xlabel('KSMR (human effort)')
     plt.ylabel(title)
     plt.legend()
-    plt.savefig(current_dir + '/plots/{}/{}_v_KSMR.png'.format(run_name, title))
+    plt.savefig(current_dir + '/plots/{}/{} Improvement v KSMR.png'.format(run_name, title))
     plt.close()
 
 
