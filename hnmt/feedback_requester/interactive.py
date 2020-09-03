@@ -91,8 +91,8 @@ def main(
 
     while interacting:
         post_interactive = document_feedback_interaction()
-        posted_edited = post_editing(post_interactive)
-        update_model(model, optimizer, post_interactive, posted_edited)
+        post_edited = post_editing(post_interactive)
+        update_model(model, optimizer, post_interactive, post_edited)
 
         print("\n\nModel updated.\n")
 
@@ -117,9 +117,9 @@ def post_editing(
     print("\nMake futher changes and re-submit, line by line.\n")
     print("When finished correcting, type Ctrl+D.\n")
 
-    posted_edited_doc = [sent for sent in sys.stdin.read().split("\n") if sent]
-    assert len(post_interactive) == len(posted_edited_doc)
-    return posted_edited_doc
+    post_edited_doc = [sent for sent in sys.stdin.read().split("\n") if sent]
+    assert len(post_interactive) == len(post_edited_doc)
+    return post_edited_doc
 
 
 

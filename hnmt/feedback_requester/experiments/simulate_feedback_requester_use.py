@@ -5,6 +5,7 @@ from typing import List, Tuple, Union
 from difflib import ndiff
 import torch
 from torch.utils.data import DataLoader
+import torch.optim as optim
 import sentencepiece as spm
 import sacrebleu
 from hnmt.utils import calculate_effort
@@ -24,6 +25,7 @@ def main(
     model = LSTMClassifier(1586, 1586)
     model.load_state_dict(torch.load(model_path))
     model.eval()
+    optimizer = optim.Adam(model.parameters())
 
     effort_scores = []
     bleu_scores = []
@@ -42,6 +44,7 @@ def main(
         gold_translations = [x[2] for x in document]
         post_interactive = []
         total_requested = 0
+        post_edited = []
 
         for batch in dataloader:
             predictions = model(batch[0]).squeeze()
@@ -62,6 +65,10 @@ def main(
                     no_feedback_struct = get_unprompted_struct(online_learning, prediction, nmt_hypo)
                     post_interactive.append(no_feedback_struct)
 
+                if online_learning:
+                    posted_edited_sent = policy_post_edit_for_updating(nmt_hypo, gold_translation, policy)
+                    post_edited.append(posted_edited_sent)
+
         doc_bleu_score, doc_chrf_score = calculate_bleu_and_chrf_scores(post_interactive,
                                                                         online_learning,
                                                                         gold_translations)
@@ -75,6 +82,13 @@ def main(
         orig_bleu.append(orig_out_bleu)
         orig_chrf.append(orig_out_chrf)
         precent_sents_requested.append(percent_requested)
+
+        if online_learning:
+            update_model(model, optimizer, post_interactive, post_edited)
+            current_dir = os.path.dirname(os.path.realpath(__file__))
+            weights_updated_path = current_dir + "/saved_state_dicts/online_updated.pt"
+            torch.save(model.state_dict(), weights_updated_path)
+            print("\nModel weights saved at {}.\n".format(weights_updated_path))
 
     return {
         'ksmr': effort_scores,
@@ -152,7 +166,7 @@ def do_policy_feedback_and_post_edit(
         return sent_effort_score, gold_translation
     else:
         chrf_score = sacrebleu.sentence_chrf(nmt_hypo, [gold_translation]).score
-        if chrf_score <= 0.95:
+        if chrf_score <= 0.75:
             sent_effort_score = calculate_effort(nmt_hypo, gold_translation)
             return sent_effort_score, gold_translation
         else:
