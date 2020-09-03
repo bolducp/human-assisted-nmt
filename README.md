@@ -112,3 +112,16 @@ In the file `hnmt/feedback_requestor/interactive.py`, make sure that the followi
 From inside the `feedback_requestor` directory, run interactive.py and follow the prompts:
 
 `python3 interactive.py`
+
+
+# Experiments
+
+## Prep the parallel data
+Download, unzip, and rename the [Japense-English Subtitle Corpus (JESC)](https://nlp.stanford.edu/projects/jesc/)
+
+```
+wget https://nlp.stanford.edu/projects/jesc/data/split.tar.gz
+tar xzvf split.tar.gz
+mv split/train jesc_train.txt
+```
+

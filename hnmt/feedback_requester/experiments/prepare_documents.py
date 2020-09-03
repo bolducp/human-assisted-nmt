@@ -1,3 +1,4 @@
+import os
 from typing import List
 import pickle
 import sentencepiece as spm
@@ -36,11 +37,12 @@ def divided_jesc_docs_nmt_output(
 
 
 if __name__ == "__main__":
+    current_dir = os.path.dirname(os.path.realpath(__file__))
     MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model'
-    with open('raw_data/jesc_train.txt') as f:
+    with open(current_dir + '/raw_data/jesc_train.txt') as f:
         lines = f.read().strip().split('\n')
     final_docs = divided_jesc_docs_nmt_output(MODEL_PATH, lines)
 
-    SAVE_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_8k_sents.p'
+    SAVE_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_100k_sents.p'
     with open(SAVE_PATH, 'wb') as f:
         pickle.dump(final_docs, f)
