@@ -14,9 +14,12 @@ def calculate_post_edited_loss(
 ):
     user_obj_loss = calculate_user_objective(post_interactive, post_edited)
     predictions = torch.tensor([x[0] for x in post_interactive])
-    system_obj_loss = calculate_system_objective(predictions)
 
-    return (0.5 * user_obj_loss) + (2.0 * system_obj_loss)
+    if active_learning:
+        system_obj_loss = calculate_system_objective(predictions)
+        return (0.5 * user_obj_loss) + (2.0 * system_obj_loss)
+
+    return user_obj_loss
 
 
 def calculate_system_objective(
