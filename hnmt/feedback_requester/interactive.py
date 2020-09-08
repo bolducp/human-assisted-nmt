@@ -22,6 +22,7 @@ def main(
     model_weights_path: str,
     sent_piece_model_path: str,
     threshold: float,
+    active_learning: bool
 ):
     model = LSTMClassifier(1586, 1586)
     model.load_state_dict(torch.load(model_weights_path))
@@ -92,7 +93,7 @@ def main(
     while interacting:
         post_interactive = document_feedback_interaction()
         post_edited = post_editing(post_interactive)
-        update_model(model, optimizer, post_interactive, post_edited)
+        update_model(model, optimizer, post_interactive, post_edited, active_learning)
 
         print("\n\nModel updated.\n")
 
@@ -127,4 +128,4 @@ if __name__ == "__main__":
     MODEL_WEIGHTS_PATH = current_dir + "/saved_state_dicts/epoch_9.pt"
     SENT_PIECE_MODEL = '/Users/paigefink/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model'
 
-    main(MODEL_WEIGHTS_PATH, SENT_PIECE_MODEL, 0.5)
+    main(MODEL_WEIGHTS_PATH, SENT_PIECE_MODEL, threshold=0.5, active_learning=False)

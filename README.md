@@ -114,6 +114,14 @@ From inside the `feedback_requestor` directory, run interactive.py and follow th
 `python3 interactive.py`
 
 
+### Configurable Settings
+
+The `threshold` parameter value (between 0 and 1) indicating the prediction threshold of the model's prediction for prompting user feedback on a sentence.
+
+The `active_learning` parameter which will use the active learning strategy (described in the paper) for updating the model after each document interaction.
+
+
+
 # Experiments
 
 ## Prep the parallel data
@@ -125,3 +133,26 @@ tar xzvf split.tar.gz
 mv split/train jesc_train.txt
 ```
 
+## Prepare the training 'documents'
+Once the corpus text is available, we run the text through all of the preprocessing and pre-trained NMT model to get the NMT outputs and convert the source sentences for input into the feedback requester model. We also split the text into "documents" of a set number of sentences. The default is 100 sentences per document, but this can be changed by adjusting the `num_sents_per_doc` parameter to the `divided_jesc_docs_nmt_output` function in `prepare_documents.py`.
+
+
+Make sure that the  `MODEL_PATH`  and  `SAVE_PATH` inputs are set to your local file paths, and run:
+
+`python3 prepare_documents.py`
+
+
+## Run the simulations
+Once you have the output of running `prepare_documents.py` saved locally (i.e. documents input to use to simulate an interaction with a user), you can run the experiments in `simulate_feedback_requester_use.py`.
+
+Make sure to first update the `MODEL_PATH` and `DOCS_PATH` parameters to point to your local files.
+
+Add any additional runs, make sure that the file paths for writing the results match what you'd like them to be locally, and run:
+
+`python3 simulate_feedback_requester_use.py`
+
+
+## Evaulate the results (i.e. generate graphs)
+Check that the file paths in `graphs.py` in `files` matches the saved paths you have locally. You can also specify the name of the subfolder inside of `plots` to save all of the graphs by changing the `dir_name` parameter to the `plot_score_and_acc_over_docs` function. Run:
+
+`python3 graphs.py`

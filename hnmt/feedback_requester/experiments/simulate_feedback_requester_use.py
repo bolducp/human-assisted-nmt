@@ -21,6 +21,7 @@ def main(
     docs_path: str,
     online_learning: bool = False,
     policy: int = 1,
+    active_learning: bool = False
 ):
     model = LSTMClassifier(1586, 1586)
     model.load_state_dict(torch.load(model_path))
@@ -84,7 +85,7 @@ def main(
         precent_sents_requested.append(percent_requested)
 
         if online_learning:
-            update_model(model, optimizer, post_interactive, post_edited)
+            update_model(model, optimizer, post_interactive, post_edited, active_learning)
             current_dir = os.path.dirname(os.path.realpath(__file__))
             weights_updated_path = current_dir + "/saved_state_dicts/online_updated.pt"
             torch.save(model.state_dict(), weights_updated_path)
@@ -187,20 +188,30 @@ def policy_post_edit_for_updating(
         return gold_translation
     else:
         chrf_score = sacrebleu.sentence_chrf(nmt_hypo, [gold_translation]).score
-        if chrf_score <= 0.70:
+        if chrf_score <= 0.60:
             return gold_translation
         return nmt_hypo
 
 
 
 if __name__ == "__main__":
-    MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/saved_state_dicts/epoch_9.pt'
-    DOCS_PATH = "/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_8k_sents.p"
-    policy_1_stats = main(0.5, MODEL_PATH, DOCS_PATH)
-    policy_2_stats = main(0.5, MODEL_PATH, DOCS_PATH, policy=2)
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    # MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/saved_state_dicts/epoch_9.pt'
+    MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/hyak_epoch_5.pt'
+    DOCS_PATH = current_dir + "/preprocessed_docs/docs_60k_sents.p"
 
-    with open("/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/scores_pol_1.p", 'wb') as f:
+    policy_1_stats = main(0.5, MODEL_PATH, DOCS_PATH)
+    with open(current_dir + "/60k_scores_pol_1.p", 'wb') as f:
         pickle.dump(policy_1_stats, f)
 
-    with open("/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/scores_pol_2.p", 'wb') as f:
+    policy_2_stats = main(0.5, MODEL_PATH, DOCS_PATH, policy=2)
+    with open(current_dir + "/60k_scores_pol_2.p", 'wb') as f:
         pickle.dump(policy_2_stats, f)
+
+    policy_2_online_stats = main(0.5, MODEL_PATH, DOCS_PATH, online_learning=True, policy=2)
+    with open(current_dir + "/test_scores_pol_2_online.p", 'wb') as f:
+        pickle.dump(policy_2_online_stats, f)
+
+    policy_2_AL_stats = main(0.5, MODEL_PATH, DOCS_PATH, online_learning=True, policy=2, active_learning=True)
+    with open(current_dir + "/test_scores_pol_2_AL.p", 'wb') as f:
+        pickle.dump(policy_2_AL_stats, f)

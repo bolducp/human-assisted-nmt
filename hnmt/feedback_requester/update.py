@@ -2,12 +2,32 @@ from typing import List, Tuple
 import torch
 import sacrebleu
 from hnmt.feedback_requester.model import LSTMClassifier
-
+from torch.distributions.bernoulli import Bernoulli
 
 POST_FEEDBACK_STRUCT = Tuple[torch.Tensor, int, str, str] # [(model_pred, was_asked, hypo_str, final_str)]
 
 
 def calculate_post_edited_loss(
+    post_interactive: List[POST_FEEDBACK_STRUCT],
+    post_edited: List[str],
+    active_learning: bool = False,
+):
+    user_obj_loss = calculate_user_objective(post_interactive, post_edited)
+    predictions = torch.tensor([x[0] for x in post_interactive])
+    system_obj_loss = calculate_system_objective(predictions)
+
+    return (0.5 * user_obj_loss) + (2.0 * system_obj_loss)
+
+
+def calculate_system_objective(
+    predictions: torch.Tensor,
+):
+    bernoulli_distribution = Bernoulli(probs=predictions)
+    entropies = bernoulli_distribution.entropy()
+    return sum(entropies)
+
+
+def calculate_user_objective(
     post_interactive: List[POST_FEEDBACK_STRUCT],
     post_edited: List[str]
 ):
@@ -46,12 +66,13 @@ def update_model(
         model: LSTMClassifier,
         optimizer,
         post_interactive: List[POST_FEEDBACK_STRUCT],
-        post_edited: List[str]
+        post_edited: List[str],
+        active_learning: bool
     ) -> float:
     model.train()
     optimizer.zero_grad()
-    loss = calculate_post_edited_loss(post_interactive, post_edited)
-    # print("Doc loss", loss)
+    loss = calculate_post_edited_loss(post_interactive, post_edited, active_learning)
+    print("Document loss", loss)
     loss.backward()
     optimizer.step()
     return loss.item()
