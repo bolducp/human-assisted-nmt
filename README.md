@@ -103,6 +103,11 @@ NMT output word piece embeddings/final configuration:
 
 
 ## Command Line Interactive Version
+To provide a rudimentary interface for interacting with the interactive version for real time use, I've provided a simple CLI. Ultimately, I envision a translator interacting with the system in a more robust, likely web-broswer based setup, where they can directly edit the prompted sentences, rather than having to enter the revised version on a new line, as well as directly edit the final output in the post-editing stage. The only advantage of post-editing the final output and providing it back at the end of the CLI interaction in this setup is that it is used to update the model after each document interaction.
+
+
+#### To run the CLI version
+
 In the file `hnmt/feedback_requestor/interactive.py`, make sure that the following variables are set to match your local paths:
 
 `MODEL_WEIGHTS_PATH`
@@ -112,6 +117,17 @@ In the file `hnmt/feedback_requestor/interactive.py`, make sure that the followi
 From inside the `feedback_requestor` directory, run interactive.py and follow the prompts:
 
 `python3 interactive.py`
+
+#### Screenshots from a very tiny document example:
+Entering the document source text
+![Entering the document source text](images/interactive_ex_1.png)
+
+Correcting a prompted example
+![Correcting a prompted example](images/interactive_ex_2.png)
+
+Final post editing
+![Final post editing](images/interactive_ex_3.png)
+
 
 
 ### Configurable Settings
