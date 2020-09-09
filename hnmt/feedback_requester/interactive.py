@@ -64,9 +64,9 @@ def main(
         post_interactive = [] # [(model_pred, was_asked, hypo_str, final_str)]
         document_effort = 0
 
-
         for batch in dataloader:
-            predictions = model(batch[0]).squeeze()
+            predictions, _ = model(batch[0])
+            predictions = predictions.squeeze()
 
             for i, prediction in enumerate(predictions):
                 nmt_hypo_sent = batch[1][i]

@@ -48,7 +48,8 @@ def main(
         post_edited = []
 
         for batch in dataloader:
-            predictions = model(batch[0]).squeeze()
+            predictions, _ = model(batch[0])
+            predictions = predictions.squeeze()
 
             for i, prediction in enumerate(predictions):
                 nmt_hypo = batch[1][i]

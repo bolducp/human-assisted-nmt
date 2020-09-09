@@ -27,7 +27,8 @@ def train(
         packed_data, chrf_scores = batch
 
         # convert to 1D tensor
-        predictions = model(packed_data).squeeze()
+        predictions, _ = model(packed_data)
+        predictions = predictions.squeeze()
 
         loss = criterion(predictions, chrf_scores)
         print(loss)
@@ -72,7 +73,8 @@ def run_training(
 
             for batch in valid_dataloader:
                 packed_data, chrf_scores = batch
-                predictions = model(packed_data).squeeze()
+                predictions, _ = model(packed_data)
+                predictions = predictions.squeeze()
                 loss = loss_function(predictions, chrf_scores)
                 epoch_loss += loss.item()
 
