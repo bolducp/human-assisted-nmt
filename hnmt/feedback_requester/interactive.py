@@ -70,8 +70,7 @@ def main(
         document_effort = 0
 
         for batch in dataloader:
-            predictions, _ = model(batch[0])
-            predictions = predictions.squeeze()
+            predictions = model(batch[0]).squeeze()
 
             for i, prediction in enumerate(predictions):
                 nmt_hypo_sent = batch[1][i]
