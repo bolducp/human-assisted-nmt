@@ -1,6 +1,7 @@
 import os
 from typing import List, Tuple
 import pickle
+import torch
 import sentencepiece as spm
 from hnmt.utils import chunks
 from hnmt.nmt.main import get_nmt_output

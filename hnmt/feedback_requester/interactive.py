@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 
 from hnmt.utils import calculate_effort
 from hnmt.nmt.main import get_document_nmt_output
+from hnmt.feedback_requester.util import calculate_predictions_entropy
 from hnmt.feedback_requester.data import generate_source_sent_embeddings, \
     generate_word_piece_sequential_input, generate_word_piece_sequential_input_for_inference
 from hnmt.feedback_requester.model import LSTMClassifier
@@ -22,7 +23,11 @@ def main(
     model_weights_path: str,
     sent_piece_model_path: str,
     threshold: float,
-    active_learning: bool
+    active_learning: bool,
+    al_strategy: str = "entropy",
+    user_obj_weight: float = 0.5,
+    sys_obj_weight: float = 0.5,
+    weights_save_name: str = "baseline"
 ):
     model = LSTMClassifier(1586, 1586)
     model.load_state_dict(torch.load(model_weights_path))
@@ -71,7 +76,14 @@ def main(
             for i, prediction in enumerate(predictions):
                 nmt_hypo_sent = batch[1][i]
 
-                if prediction >= threshold:
+                if active_learning and al_strategy == "entropy":
+                    prediction_entropy = calculate_predictions_entropy(predictions)
+                    combined_objs = (user_obj_weight * prediction) + (sys_obj_weight * prediction_entropy)
+                    request_feedback = threshold >= combined_objs
+                else:
+                    request_feedback = prediction >= threshold
+
+                if request_feedback:
                     print("\nSource:", batch[2][i])
                     print("Translation:", nmt_hypo_sent)
                     user_correction = input("\nPlease correct or press 'Enter' if no change is needed.\n")
@@ -93,14 +105,14 @@ def main(
     while interacting:
         post_interactive = document_feedback_interaction()
         post_edited = post_editing(post_interactive)
-        update_model(model, optimizer, post_interactive, post_edited, active_learning)
+        update_model(model, optimizer, post_interactive, post_edited)
 
         print("\n\nModel updated.\n")
 
         save_weights = input("To save the model updated model weights, type 's'. Otherwise, enter any key.\n")
         if save_weights.lower() == 's':
-            torch.save(model.state_dict(), current_dir + "/saved_state_dicts/updated.pt")
-            print("\nModel weights saved at {}.\n".format(current_dir + "/saved_state_dicts/updated.pt"))
+            torch.save(model.state_dict(), current_dir + "/saved_state_dicts/{}.pt".format(weights_save_name))
+            print("\nModel weights saved at {}.\n".format(current_dir + "/saved_state_dicts/{}.pt").format(weights_save_name))
 
         translate_new_doc = input("\nTo translate another document enter 'y', to end enter 'n'.\n")
         if translate_new_doc.lower() == 'n':
@@ -125,7 +137,8 @@ def post_editing(
 
 
 if __name__ == "__main__":
-    MODEL_WEIGHTS_PATH = current_dir + "/saved_state_dicts/epoch_9.pt"
+    MODEL_WEIGHTS_PATH = current_dir + "/saved_state_dicts/small_epoch_1.pt"
     SENT_PIECE_MODEL = '/Users/paigefink/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model'
 
-    main(MODEL_WEIGHTS_PATH, SENT_PIECE_MODEL, threshold=0.5, active_learning=False)
+    main(MODEL_WEIGHTS_PATH, SENT_PIECE_MODEL, threshold=0.7, active_learning=False)
+    # main(MODEL_WEIGHTS_PATH, SENT_PIECE_MODEL, threshold=0.7, active_learning=True, weights_save_name="run0")

@@ -27,8 +27,7 @@ def train(
         packed_data, chrf_scores = batch
 
         # convert to 1D tensor
-        predictions, _ = model(packed_data)
-        predictions = predictions.squeeze()
+        predictions = model(packed_data).squeeze()
 
         loss = criterion(predictions, chrf_scores)
         print(loss)
@@ -65,7 +64,7 @@ def run_training(
         train_loss = train(model, dataloader, optimizer, loss_function)
         print("train loss (epoch {}):".format(epoch), train_loss)
         writer.add_scalar("Loss/train", train_loss, epoch)
-        torch.save(model.state_dict(), current_dir + "/saved_state_dicts/epoch_{}.pt".format(epoch))
+        torch.save(model.state_dict(), current_dir + "/saved_state_dicts/baseline/epoch_{}.pt".format(epoch))
 
         model.eval()
         with torch.no_grad():
@@ -73,8 +72,7 @@ def run_training(
 
             for batch in valid_dataloader:
                 packed_data, chrf_scores = batch
-                predictions, _ = model(packed_data)
-                predictions = predictions.squeeze()
+                predictions = model(packed_data).squeeze()
                 loss = loss_function(predictions, chrf_scores)
                 epoch_loss += loss.item()
 
