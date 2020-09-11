@@ -48,8 +48,7 @@ def main(
         post_edited = []
 
         for batch in dataloader:
-            predictions, _ = model(batch[0])
-            predictions = predictions.squeeze()
+            predictions = model(batch[0]).squeeze()
 
             for i, prediction in enumerate(predictions):
                 nmt_hypo = batch[1][i]
@@ -86,7 +85,7 @@ def main(
         precent_sents_requested.append(percent_requested)
 
         if online_learning:
-            update_model(model, optimizer, post_interactive, post_edited, active_learning)
+            update_model(model, optimizer, post_interactive, post_edited)
             current_dir = os.path.dirname(os.path.realpath(__file__))
             weights_updated_path = current_dir + "/saved_state_dicts/online_updated.pt"
             torch.save(model.state_dict(), weights_updated_path)
