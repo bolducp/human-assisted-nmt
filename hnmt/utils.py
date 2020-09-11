@@ -26,3 +26,13 @@ def calculate_effort(
     Use the python difflib library to help calculate the KSMR variant score between two sentences
     """
     return len([i for i in ndiff(x, y) if i[0] != ' ']) + base_effort
+
+
+def normalize_effort_scores(
+    effort_scores: List[int]
+) -> List[float]:
+    low = min(effort_scores) - 10
+    high = max(effort_scores) + 10
+    for i, x in enumerate(effort_scores):
+        effort_scores[i] = (x - low) / (high - low)
+    return effort_scores

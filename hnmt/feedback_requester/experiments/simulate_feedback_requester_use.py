@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 import sentencepiece as spm
 import sacrebleu
-from hnmt.utils import calculate_effort
+from hnmt.utils import calculate_effort, normalize_effort_scores
 from hnmt.nmt.main import get_document_nmt_output
 from hnmt.feedback_requester.model import LSTMClassifier
 from hnmt.feedback_requester.data import collate_pad_with_gold_text
@@ -92,7 +92,7 @@ def main(
             print("\nModel weights saved at {}.\n".format(weights_updated_path))
 
     return {
-        'ksmr': effort_scores,
+        'ksmr': normalize_effort_scores(effort_scores),
         'post_feedback_bleu': bleu_scores,
         'post_feedback_chrf': chrf_scores,
         'orig_nmt_out_bleu': orig_bleu,
