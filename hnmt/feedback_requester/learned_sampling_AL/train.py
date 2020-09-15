@@ -36,27 +36,30 @@ def train(
         loss_2 = 0
 
         #step through the predictions and calculate the loss one at a time
-
+        import time
         for i, x  in enumerate(zip(user_obj_predictions, chrf_scores)):
+            start_sent = time.time()
             print("i: ", i)
             pred, chrf = x
+            start = time.time()
 
             sent_loss = user_obj_criterion(pred, chrf)
             print("sent loss 1: ", sent_loss)
             loss_1 += sent_loss
 
+
+            start = time.time()
             sent_loss.backward(retain_graph=True)
+            print("time to do backwards pass", time.time() - start)
+            start = time.time()
             # gradients = loss_1.grad
 
             # instead, just take the mean of each tensor of weights
+      
+            mean = sum((torch.mean(torch.abs(param.grad))
+                        for param in model.parameters() 
+                        if param.requires_grad and param.grad is not None))
             
-            grads = list((torch.abs(param.grad) for param in model.parameters() 
-                    if param.requires_grad and param.grad is not None))
-            sizes = list((torch.numel(g) for g in grads))
-            total = sum(sizes)
-            weights = (s / total for s in sizes)
-            mean = sum(g.mean() * w for g, w in zip(grads, weights))
-    
             # grads = list((torch.abs(param.grad) for param in model.parameters() 
             #         if param.requires_grad and param.grad is not None))
             # sizes = list((torch.numel(g) for g in grads))
@@ -66,23 +69,29 @@ def train(
         
             print("mean: ", mean)
             print("sys_obj_predictions[{}]: ".format(i), sys_obj_predictions[i])
+
+            start = time.time()
             sent_loss_2 = sys_obj_criterion(sys_obj_predictions[i], mean)
             print("sent loss 2: ", sent_loss_2)
+            print("time to calculate sent_loss 2", time.time() - start)
+            start = time.time()
             print()
 
 
             loss_2 += sent_loss_2
+            print("time full sent", time.time() - start_sent, "\n\n")
 
         # loss_2 = 
 
-        print("loss 1 total:   ", loss_1)
+        # print("loss 1 total:   ", loss_1)
         print("loss 2 total:   ", loss_2)
 
         loss_2.backward()
 
         optimizer.step()
 
-        epoch_loss += loss_1.item() + loss_2.item()
+        # epoch_loss += loss_1.item() + loss_2.item()
+        epoch_loss += loss_2.item()
         print()
         print()
         print()
