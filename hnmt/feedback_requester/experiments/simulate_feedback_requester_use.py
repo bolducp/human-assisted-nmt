@@ -107,7 +107,8 @@ def main(
                 update_model(model, optimizer, post_interactive, post_edited)
 
             current_dir = os.path.dirname(os.path.realpath(__file__))
-            weights_updated_path = current_dir + "/saved_state_dicts/online_updated.pt"
+            name = f"online_updated_policy={policy}_al={active_learning}_ALstrategy={al_strategy}.pt"
+            weights_updated_path = current_dir + "/saved_state_dicts/" + name
             torch.save(model.state_dict(), weights_updated_path)
             print("\nModel weights saved at {}.\n".format(weights_updated_path))
 
