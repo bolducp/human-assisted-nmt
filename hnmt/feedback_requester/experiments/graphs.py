@@ -123,10 +123,13 @@ def save_plot_map_ksmr_against_score_improvement(
 
 
 if __name__ == "__main__":
-    files = [("Policy 1", current_dir + "/60k_scores_pol_1.p"),
-            ("Policy 2", current_dir + "/60k_scores_pol_2.p"),
-            ("Online", current_dir + "/60k_scores_pol_2_online.p"),
-            ("AL", current_dir + "/60k_scores_pol_2_AL.p")]
+    files = [
+                ("Policy 1", current_dir + "/scores_pol_1.p"),
+                ("Policy 2", current_dir + "/scores_pol_2.p"),
+                ("Online", current_dir + "/scores_pol_2_online.p"),
+                ("Learned Sampling AL", current_dir + "/scores_pol_2_learned_AL.p"),
+                ("AL", current_dir + "/scores_pol_2_AL.p")
+            ]
 
     run_stats = []
     for run in files:

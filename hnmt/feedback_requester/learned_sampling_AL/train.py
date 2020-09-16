@@ -73,7 +73,7 @@ def run_training(
     validation_set = NMTOutputDataset(validation_file_name)
     valid_dataloader = DataLoader(validation_set, batch_size=16, shuffle=True, num_workers=4, collate_fn=collate_pad_fn, pin_memory=True)
 
-    N_EPOCHS = 2
+    N_EPOCHS = 5
     model = LearnedALSamplingLSTMClassifier(1586, 1586)
     optimizer = optim.Adam(model.parameters())
 

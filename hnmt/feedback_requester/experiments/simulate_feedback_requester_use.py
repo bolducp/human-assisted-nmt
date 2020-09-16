@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 import sentencepiece as spm
 import sacrebleu
+from hnmt.feedback_requester.util import calculate_entropy
 from hnmt.utils import calculate_effort, normalize_effort_scores
 from hnmt.nmt.main import get_document_nmt_output
 from hnmt.feedback_requester.model import LSTMClassifier
@@ -64,8 +65,12 @@ def main(
             for i, prediction in enumerate(predictions):
                 nmt_hypo = batch[1][i]
                 gold_translation = batch[2][i]
+                sys_obj_pred = sys_obj_predictions[i] if al_strategy == 'learned_sampling' else None
 
-                if prediction >= threshold:
+                request_feedback = should_request_feedback(threshold, prediction, active_learning,
+                                                            al_strategy, sys_obj_pred)
+
+                if request_feedback:
                     total_requested += 1
                     sent_effort_score, final_sent = do_policy_feedback_and_post_edit(nmt_hypo,
                                                                                     gold_translation,
@@ -114,6 +119,25 @@ def main(
         'orig_nmt_out_chrf': orig_chrf,
         'percent_sent_requested': precent_sents_requested
     }
+
+
+def should_request_feedback(
+    threshold: float,
+    prediction: torch.Tensor,
+    active_learning: bool,
+    al_strategy: str,
+    sys_pred: torch.Tensor
+) -> bool:
+
+    if active_learning:
+        if al_strategy == 'entropy':
+            return 0.5 * calculate_entropy(prediction) + 0.5 * prediction >= threshold
+        elif al_strategy == 'learned_sampling':
+            return 0.5 * sys_pred + 0.5 * prediction >= threshold
+        else:
+            raise ValueError(f'Unsupported active learning strategy {al_strategy}')
+
+    return prediction >= threshold
 
 
 def calculate_additional_stats(
@@ -211,22 +235,38 @@ def policy_post_edit_for_updating(
 
 if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    # MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/saved_state_dicts/epoch_9.pt'
-    MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/hyak_epoch_5.pt'
+    MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/saved_state_dicts/baseline/epoch_4.pt'
+    LEARNED_AL_MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/learned_sampling_AL/saved_state_dicts/epoch_4.pt'
     DOCS_PATH = current_dir + "/preprocessed_docs/docs_60k_sents.p"
 
-    policy_1_stats = main(0.5, MODEL_PATH, DOCS_PATH)
-    with open(current_dir + "/60k_scores_pol_1.p", 'wb') as f:
+    policy_1_stats = main(0.5, MODEL_PATH, DOCS_PATH, online_learning=False)
+    with open(current_dir + "/scores_pol_1.p", 'wb') as f:
         pickle.dump(policy_1_stats, f)
 
-    policy_2_stats = main(0.5, MODEL_PATH, DOCS_PATH, policy=2)
-    with open(current_dir + "/60k_scores_pol_2.p", 'wb') as f:
+
+    policy_2_stats = main(0.5, MODEL_PATH, DOCS_PATH, policy=2, online_learning=False)
+    with open(current_dir + "/scores_pol_2.p", 'wb') as f:
         pickle.dump(policy_2_stats, f)
 
-    policy_2_online_stats = main(0.5, MODEL_PATH, DOCS_PATH, online_learning=True, policy=2)
-    with open(current_dir + "/test_scores_pol_2_online.p", 'wb') as f:
+
+    policy_2_online_stats = main(0.5, MODEL_PATH, DOCS_PATH, online_learning=True,
+                                 policy=2, active_learning=False)
+    with open(current_dir + "/scores_pol_2_online.p", 'wb') as f:
         pickle.dump(policy_2_online_stats, f)
 
-    policy_2_AL_stats = main(0.5, MODEL_PATH, DOCS_PATH, online_learning=True, policy=2, active_learning=True)
-    with open(current_dir + "/test_scores_pol_2_AL.p", 'wb') as f:
+
+    policy_2_AL_stats = main(0.5, MODEL_PATH, DOCS_PATH, online_learning=True, policy=2,
+                            active_learning=True, al_strategy="entropy")
+    with open(current_dir + "/scores_pol_2_AL.p", 'wb') as f:
         pickle.dump(policy_2_AL_stats, f)
+
+
+    policy_2_learned_sampling_AL_stats = main(0.5,
+                                              LEARNED_AL_MODEL_PATH,
+                                              DOCS_PATH,
+                                              online_learning=True,
+                                              policy=2,
+                                              active_learning=True,
+                                              al_strategy="learned_sampling")
+    with open(current_dir + "/scores_pol_2_learned_AL.p", 'wb') as f:
+        pickle.dump(policy_2_learned_sampling_AL_stats, f)

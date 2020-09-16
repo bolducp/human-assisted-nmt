@@ -4,7 +4,6 @@ import torch.nn as nn
 import sacrebleu
 from hnmt.feedback_requester.model import LSTMClassifier
 from hnmt.feedback_requester.learned_sampling_AL.model import LearnedALSamplingLSTMClassifier
-from torch.distributions.bernoulli import Bernoulli
 
 POST_FEEDBACK_STRUCT = Tuple[torch.Tensor, int, str, str] # [(model_pred, was_asked, hypo_str, final_str)]
 sys_obj_criterion = nn.MSELoss()
