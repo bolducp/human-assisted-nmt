@@ -11,8 +11,10 @@ import sacrebleu
 from hnmt.utils import calculate_effort, normalize_effort_scores
 from hnmt.nmt.main import get_document_nmt_output
 from hnmt.feedback_requester.model import LSTMClassifier
+from hnmt.feedback_requester.learned_sampling_AL.model import LearnedALSamplingLSTMClassifier
 from hnmt.feedback_requester.data import collate_pad_with_gold_text
-from hnmt.feedback_requester.update import POST_FEEDBACK_STRUCT, calculate_post_edited_loss, update_model
+from hnmt.feedback_requester.update import POST_FEEDBACK_STRUCT, calculate_post_edited_loss, \
+                                            update_model, update_learned_al_model
 
 
 def main(
@@ -21,9 +23,13 @@ def main(
     docs_path: str,
     online_learning: bool = False,
     policy: int = 1,
-    active_learning: bool = False
+    active_learning: bool = False,
+    al_strategy: str = 'entropy'
 ):
-    model = LSTMClassifier(1586, 1586)
+    if al_strategy == 'learned_sampling':
+        model = LearnedALSamplingLSTMClassifier(1586, 1586)
+    else:
+        model = LSTMClassifier(1586, 1586)
     model.load_state_dict(torch.load(model_path))
     model.eval()
     optimizer = optim.Adam(model.parameters())
@@ -48,7 +54,12 @@ def main(
         post_edited = []
 
         for batch in dataloader:
-            predictions = model(batch[0]).squeeze()
+            if al_strategy == 'learned_sampling':
+                predictions, sys_obj_predictions = model(batch[0])
+                predictions = predictions.squeeze()
+                sys_obj_predictions = sys_obj_predictions.squeeze()
+            else:
+                predictions = model(batch[0]).squeeze()
 
             for i, prediction in enumerate(predictions):
                 nmt_hypo = batch[1][i]
@@ -85,7 +96,11 @@ def main(
         precent_sents_requested.append(percent_requested)
 
         if online_learning:
-            update_model(model, optimizer, post_interactive, post_edited)
+            if al_strategy == 'learned_sampling':
+                update_learned_al_model(model, optimizer, post_interactive, post_edited, sys_obj_predictions)
+            else:
+                update_model(model, optimizer, post_interactive, post_edited)
+
             current_dir = os.path.dirname(os.path.realpath(__file__))
             weights_updated_path = current_dir + "/saved_state_dicts/online_updated.pt"
             torch.save(model.state_dict(), weights_updated_path)
