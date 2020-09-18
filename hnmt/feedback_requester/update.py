@@ -21,12 +21,12 @@ def calculate_post_edited_loss(
 
         if was_asked(post_interactive[i]):
             chrf_score = torch.tensor(sacrebleu.sentence_chrf(nmt_hypo, [final_sent]).score)
-            loss = loss + (2.25 * model_pred * chrf_score) + ((1 - model_pred) * (1 - chrf_score))
+            loss = loss + (2.35 * model_pred * chrf_score) + 0.5 * ((1 - model_pred) * (1 - chrf_score))
         elif was_post_edited(post_interactive[i], post_edited[i]):
             chrf_score = torch.tensor(sacrebleu.sentence_chrf(nmt_hypo, [final_sent]).score)
-            loss = loss + (0.25 * (1 - model_pred) * (1 - chrf_score))
+            loss = loss + (0.55 * (1 - model_pred) * (1 - chrf_score))
         else:
-            loss = loss + model_pred
+            loss = loss + 0.85 * model_pred
     return loss
 
 
@@ -39,12 +39,12 @@ def calculate_sent_post_edited_loss(
 
     if was_asked(sent):
         chrf_score = torch.tensor(sacrebleu.sentence_chrf(nmt_hypo, [final_sent]).score)
-        return (2.25 * model_pred * chrf_score) + ((1 - model_pred) * (1 - chrf_score))
+        return (2.35 * model_pred * chrf_score) + 0.5 *  ((1 - model_pred) * (1 - chrf_score))
     elif was_post_edited(sent, final_sent):
         chrf_score = torch.tensor(sacrebleu.sentence_chrf(nmt_hypo, [final_sent]).score)
-        return (0.25 * (1 - model_pred) * (1 - chrf_score))
+        return (0.15 * (1 - model_pred) * (1 - chrf_score))
     else:
-        return model_pred
+        return 0.5 * model_pred
 
 
 def was_asked(

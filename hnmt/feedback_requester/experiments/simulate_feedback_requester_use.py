@@ -46,11 +46,12 @@ def main(
         documents = pickle.load(f)
 
     for document in documents:
-        dataloader = DataLoader(document, batch_size=32, shuffle=False, num_workers=0,
+        dataloader = DataLoader(document, batch_size=16, shuffle=False, num_workers=0,
                                 collate_fn=collate_pad_with_gold_text, pin_memory=True)
         document_effort = 0
         gold_translations = [x[2] for x in document]
         post_interactive = []
+        all_sys_obj_predictions = torch.empty(0)
         total_requested = 0
         post_edited = []
 
@@ -59,6 +60,7 @@ def main(
                 predictions, sys_obj_predictions = model(batch[0])
                 predictions = predictions.squeeze()
                 sys_obj_predictions = sys_obj_predictions.squeeze()
+                all_sys_obj_predictions = torch.cat((all_sys_obj_predictions, sys_obj_predictions))
             else:
                 predictions = model(batch[0]).squeeze()
 
@@ -102,7 +104,7 @@ def main(
 
         if online_learning:
             if al_strategy == 'learned_sampling':
-                update_learned_al_model(model, optimizer, post_interactive, post_edited, sys_obj_predictions)
+                update_learned_al_model(model, optimizer, post_interactive, post_edited, all_sys_obj_predictions)
             else:
                 update_model(model, optimizer, post_interactive, post_edited)
 
@@ -132,7 +134,7 @@ def should_request_feedback(
 
     if active_learning:
         if al_strategy == 'entropy':
-            return 0.5 * calculate_entropy(prediction) + 0.5 * prediction >= threshold
+            return 0.5 * calculate_entropy(prediction) + 0.7 * prediction >= threshold
         elif al_strategy == 'learned_sampling':
             return 0.5 * sys_pred + 0.5 * prediction >= threshold
         else:
