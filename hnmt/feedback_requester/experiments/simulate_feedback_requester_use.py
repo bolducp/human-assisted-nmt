@@ -136,7 +136,7 @@ def should_request_feedback(
         if al_strategy == 'entropy':
             return 0.5 * calculate_entropy(prediction) + 0.7 * prediction >= threshold
         elif al_strategy == 'learned_sampling':
-            return 0.5 * sys_pred + 0.5 * prediction >= threshold
+            return 10 * sys_pred + 0.6 * prediction >= threshold
         else:
             raise ValueError(f'Unsupported active learning strategy {al_strategy}')
 

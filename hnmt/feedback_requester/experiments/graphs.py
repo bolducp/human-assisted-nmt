@@ -11,7 +11,7 @@ RUN_STATS = Dict[str, Union[int, float]]
 def plot_score_and_acc_over_docs(
     dir_name: str,
     stats: List[Tuple[str, RUN_STATS]],
-    per_docs: int = 10
+    per_docs: int = 5
 ) -> None:
     if not os.path.exists(current_dir + "/plots/" + dir_name):
         os.makedirs(current_dir + "/plots/" + dir_name)
