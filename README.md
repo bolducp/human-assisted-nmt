@@ -50,9 +50,9 @@ github).
 **1.** Make sure that you have all of the dependencies listed in `requirements.txt` installed. One additional dependency that you'll need locally is my verison of the fairseq library, which I had to adapt in order to get the NMT model probablity outputs.
 ```
 $ git clone git@github.com:bolducp/fairseq.git
+$ cd fairseq
 $ git fetch --all
 $ git checkout hnmt
-$ cd fairseq
 $ pip install ./
 ```
 
