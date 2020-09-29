@@ -4,13 +4,15 @@ import torch
 import sentencepiece as spm
 import fairseq
 from typing import List, Tuple
+from tqdm import tqdm
 
+cuda = torch.device('cuda:1')
 current_dir = os.path.dirname(os.path.realpath(__file__))
 sp = spm.SentencePieceProcessor()
 sp.load(current_dir + "/corpus/enja_spm_models/spm.en.nopretok.model")
 
 model_dir = current_dir + '/pretrained_model_jaen'
-pretrained_nmt_model = fairseq.models.BaseFairseqModel.from_pretrained(model_dir, checkpoint_file='small.pretrain.pt')
+pretrained_nmt_model = fairseq.models.BaseFairseqModel.from_pretrained(model_dir, checkpoint_file='base.pretrain.pt').cuda("cuda:1")
 
 def read_lines(
         src_translations_path: str,
@@ -60,8 +62,13 @@ def generate_and_save_nmt_output(
     as well as the target gold translation to a pickle file
     """
     lines = read_lines(src_translations_path, trg_translations_path)
+    print(len(lines))
+    lines = lines[200000:250000]
     nmt_out_lines = get_nmt_output(lines)
-    pickle.dump(nmt_out_lines, open(output_save_path, 'wb'))
+
+
+    with open(output_save_path, 'wb') as f:
+        pickle.dump(nmt_out_lines, f)
 
 
 def get_nmt_output(
@@ -72,8 +79,13 @@ def get_nmt_output(
     and returns the output results (probability of each word and text translation)
     """
     filtered_lines = filter_by_length(lines)
-    return [(parse_nmt_output(pretrained_nmt_model.translate(line[0])), line[0], line[1]) 
-                    for line in filtered_lines]
+    outs = []
+    print("filtered lines", len(filtered_lines))
+    for i in tqdm(range(len(filtered_lines))):
+        line = filtered_lines[i]
+        out = (parse_nmt_output(pretrained_nmt_model.translate(line[0])), line[0], line[1])
+        outs.append(out)
+    return outs
 
 
 def get_document_nmt_output(
@@ -87,6 +99,7 @@ def get_document_nmt_output(
 
 
 if __name__ == "__main__":
+    print("cuda avail", torch.cuda.is_available())
     tok_jpn_sents_path = current_dir + "/corpus/spm/kyoto-train.ja"
     tok_en_sents_path =  current_dir + "/corpus/kftt-data-1.0/data/tok/kyoto-train.en"
-    generate_and_save_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "nmt_out_300_to_320k_validation.p")
+    generate_and_save_nmt_output(tok_jpn_sents_path, tok_en_sents_path, "valid.p")

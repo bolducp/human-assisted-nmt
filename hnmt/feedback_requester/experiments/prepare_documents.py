@@ -17,14 +17,14 @@ def main(
     parallel_data = []
 
     with open(current_dir + '/raw_data/jesc_train.txt') as f:
-        lines = f.read().strip().split('\n')
+        lines = f.read().strip().split('\n')[:50000]
 
     for line in lines:
         eng, jpn = line.split('\t')
         tok_jpn = " ".join(tokenizer.encode("".join(jpn.split()), out_type=str))
         parallel_data.append((tok_jpn, eng))
 
-    final_docs = divided_jesc_docs_nmt_output(parallel_data, num_sents_per_doc=50)
+    final_docs = divided_jesc_docs_nmt_output(parallel_data, num_sents_per_doc=32)
 
     with open(output_path, 'wb') as f:
         pickle.dump(final_docs, f)
@@ -51,6 +51,6 @@ def divided_jesc_docs_nmt_output(
 
 
 if __name__ == "__main__":
-    MODEL_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model'
-    SAVE_PATH = '/Users/paigefink/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_20k_to_40k_sents.p'
+    MODEL_PATH = '/home/ec2-user/human-assisted-nmt/hnmt/nmt/corpus/enja_spm_models/spm.ja.nopretok.model'
+    SAVE_PATH = '/home/ec2-user/human-assisted-nmt/hnmt/feedback_requester/experiments/preprocessed_docs/docs_50k_sents.p'
     main(MODEL_PATH, SAVE_PATH)
