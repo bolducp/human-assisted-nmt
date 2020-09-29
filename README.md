@@ -47,7 +47,14 @@ and "/corpus/kftt-data-1.0/data/tok/kyoto-train.en" if using the KFTT corpus-- a
 example for how to download and preprocess this data can be found on the JParaCrawl
 github).
 
-**1.** Make sure that you have all of the dependencies listed in `requirements.txt` installed. One additional dependency that you'll need locally is my verison of the fairseq library, which I had to adapt in order to get the NMT model probablity outputs.
+**1.** Make sure that you have all of the dependencies listed in `requirements.txt` installed, as well as the hnmt package installed.
+From the root directory, run the following commands:
+```
+$ pip3 install -e ./
+$ pip3 install -r requirements.txt
+```
+
+One additional dependency that you'll need locally is my verison of the fairseq library, which I had to adapt in order to get the NMT model probablity outputs.
 ```
 $ git clone git@github.com:bolducp/fairseq.git
 $ cd fairseq
